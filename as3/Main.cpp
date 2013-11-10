@@ -19,6 +19,12 @@
 #include <GL/glu.h>
 #endif
 
+#ifdef _WIN32
+static DWORD lastTime;
+#else
+static struct timeval lastTime;
+#endif
+
 #include <time.h>
 #include <math.h>
 #include <string.h>
@@ -42,53 +48,11 @@ public:
 class Point {
 public:
 	GLfloat x, y, z;
-	void multiplyPoint(GLfloat s, Point p){
-		x = s * p.x;
-		y = s * p.y;
-		z = s * p.z;	
-	}
-
-	void addPointTwoArg(Point p1, Point p2){
-		x = p1.x + p2.x;
-		y = p1.y + p2.y;
-		z = p1.z + p2.z;
-	}
-
-	void addPointOneArg(Point p1){
-		x = x + p1.x;
-		y = y + p1.y;
-		z = z + p1.z;
-	}
-
-	void subtractPointTwoArg(Point p1, Point p2){
-		x = p1.x - p2.x;
-		y = p1.y - p2.y;
-		z = p1.z - p2.z;
-	}
-
-	void subtractPointOneArg(Point p1){
-		x = x - p1.x;
-		y = y - p1.y;
-		z = z - p1.z;
-	}
 };
 
 class BCurve {
 public:
 	Point p1, p2, p3, p4;
-
-	void Bernstein(GLfloat u,Point* p){
-		Point a, b, c, d;
-
-		a.multiplyPoint(pow(u, 3.0), p1);
-		b.multiplyPoint(3.0*pow(u, 2.0)*(1.0-u), p2);
-		c.multiplyPoint(3.0*u*pow((1.0-u), 2.0), p3);
-		d.multiplyPoint(pow((1.0-u),3.0), p4);
-
-		p->addPointTwoArg(a, b);
-		p->addPointOneArg(c);
-		p->addPointOneArg(d);
-	}
 };
 
 class BPatch {
@@ -109,10 +73,20 @@ int numPatches;
 bool wired = false;
 bool smooth = false;
 
+GLfloat yRot = 0.0;
+GLfloat xRot = 0.0;
+GLfloat xTran = 0.0;
+GLfloat yTran = 0.0;
+
+GLfloat maxX = 1.0;
+GLfloat minX = -1.0;
+GLfloat maxY = 1.0;
+GLfloat minY = -1.0;
+
 //Light Source Information
 //Light Zero
 GLfloat diffuse0[]={0.5, 0.0, 0.0, 1.0};
-GLfloat ambient0[]={0.0, 0.0, 0.0, 1.0};
+GLfloat ambient0[]={1.0, 0.0, 0.0, 1.0};
 GLfloat specular0[]={1.0, 0.0, 0.0, 1.0};
 GLfloat light0_pos[]={1.0, 0.0, 3,0, 1.0};
 
@@ -126,9 +100,7 @@ void myReshape(int w, int h) {
 	glViewport (0,0,viewport.w,viewport.h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(-1, 1, -1, 1);
-	//gluOrtho2D(0, viewport.w, 0, viewport.h);
-	//glOrtho(-1, 1, -1, 1, 1, -1);
+	glOrtho(minX, maxX, minY, maxY, -100, 100);
 }
 
 //****************************************************
@@ -150,85 +122,109 @@ void initScene(){
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
 }
 
-
 //*********************************************
 // Helper Methods
-//*********************************************
+//********************************************* 
 
-void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Point new2, Point new3, Point new4){
+Point multiplyPoint(GLfloat s, Point p){
+	Point r;
+	r.x = p.x * s;
+	r.y = p.y * s;
+	r.z = p.z * s;
+	return r;
+}
+
+Point addPoint(Point p1, Point p2){
+	Point r;
+	r.x = p1.x + p2.x;
+	r.y = p1.y + p2.y;
+	r.z = p1.z + p2.z;
+	return r;
+}
+
+Point subtractPoint(Point p1, Point p2){
+	Point r;
+	r.x = p1.x - p2.x;
+	r.y = p1.y - p2.y;
+	r.z = p1.z - p2.z;
+	return r;
+}
+
+Point bernstein(GLfloat u, BCurve curve){
+	Point a, b, c, d, r;
+
+	a = multiplyPoint(pow(u, 3.0), curve.p1);
+	b = multiplyPoint(3.0*pow(u, 2.0)*(1.0-u), curve.p2);
+	c = multiplyPoint(3.0*u*pow((1.0-u), 2.0), curve.p3);
+	d = multiplyPoint(pow((1.0-u),3.0), curve.p4);
+
+	r = addPoint(addPoint(a, b), addPoint(c, d));
+	return r;
+}
+
+void drawPolygon(Point p1, Point p2, Point p3, Point p4){
 	glBegin(GL_POLYGON);
 	//glNormal3f();
-	glVertex3f(old1.x, old1.y, old1.z);
-	glVertex3f(new1.x, new1.y, new1.z);
-	glVertex3f(new2.x, new2.y, new2.z);
-	glVertex3f(old2.x, old2.y, old2.z);
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	//glNormal3f();
-	glVertex3f(old2.x, old2.y, old2.z);
-	glVertex3f(new2.x, new2.y, new2.z);
-	glVertex3f(new3.x, new3.y, new3.z);
-	glVertex3f(old3.x, old3.y, old3.z);
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	//glNormal3f();
-	glVertex3f(old3.x, old3.y, old3.z);
-	glVertex3f(new3.x, new1.y, new3.z);
-	glVertex3f(new4.x, new2.y, new4.z);
-	glVertex3f(old4.x, old4.y, old4.z);
+	glVertex3f(p1.x, p1.y, p1.z);
+	glVertex3f(p2.x, p2.y, p2.z);
+	glVertex3f(p4.x, p4.y, p4.z);
+	glVertex3f(p3.x, p3.y, p3.z);
 	glEnd();
 }
 
-
 void curveTraversal(BPatch patch){
 
+	Point p1, p2, p3, p4;
 
-	Point* old1 = new Point;
-	Point* old2 = new Point;
-	Point* old3 = new Point;
-	Point* old4 = new Point;
-	Point* new1 = new Point;
-	Point* new2 = new Point;
-	Point* new3 = new Point;
-	Point* new4 = new Point;
+	GLfloat old_u, new_u, old_v, new_v;
 
+	BCurve old_c, new_c;
 
-	GLfloat old_u = 0.0;
+	old_u = 0.0;
 
-	patch.c1.Bernstein(old_u, old1);
-	patch.c2.Bernstein(old_u, old2);
-	patch.c3.Bernstein(old_u, old3);
-	patch.c4.Bernstein(old_u, old4);
+	old_c.p1 = bernstein(old_u, patch.c1);
+	old_c.p2 = bernstein(old_u, patch.c2);
+	old_c.p3 = bernstein(old_u, patch.c3);
+	old_c.p4 = bernstein(old_u, patch.c4);
 
 	for (GLfloat u = 0.0; u < 1.0; u += stepSize){
-		GLfloat new_u = old_u + stepSize;
+		new_u = old_u + stepSize;
 
 		if (new_u > 1.0){
 			new_u = 1.0;
 		}
 
-		patch.c1.Bernstein(new_u, new1);
-		patch.c2.Bernstein(new_u, new2);
-		patch.c3.Bernstein(new_u, new3);
-		patch.c4.Bernstein(new_u, new4);
+		new_c.p1 = bernstein(new_u, patch.c1);
+		new_c.p2 = bernstein(new_u, patch.c2);
+		new_c.p3 = bernstein(new_u, patch.c3);
+		new_c.p4 = bernstein(new_u, patch.c4);
 
-		drawPolygon(*old1, *old2, *old3, *old4, *new1, *new2, *new3, *new4);
+		old_v = 0.0;
+		p1 = bernstein(old_v, old_c);
+		p2 = bernstein(old_v, new_c);
 
-		old1 = new1;
-		old2 = new2;
-		old3 = new3;
-		old4 = new4;
+		for (GLfloat v = 0.0; v < 1.0; v += stepSize) {
+			new_v = old_v + stepSize;
 
+			if (new_v > 1.0){
+				new_v = 1.0;
+			}
 
+			p3 = bernstein(new_v, old_c);
+			p4 = bernstein(new_v, new_c);
+
+			drawPolygon(p1, p2, p3, p4);
+
+			old_v = new_v;
+		}
+
+		old_c = new_c;
 		old_u = new_u;
-
 	}
 }
 
 void uniformTesselation(){
-	for(int i = 0; i < bPatches.size(); i++){
+	for(unsigned int i = 0; i < bPatches.size(); i++){
 		curveTraversal(*(bPatches.at(i)));
 	}
 } 
@@ -240,6 +236,8 @@ void loadScene(std::string file) {
 	numPatches = 0;
 	int patchCount = 0;
 	int curveCount = 0;
+
+	GLfloat maxBoundaries = 0.0;
 
 	std::ifstream inpfile(file.c_str());
 	if(!inpfile.is_open()) {
@@ -271,6 +269,13 @@ void loadScene(std::string file) {
 				}
 			} else {
 				if (patchCount < numPatches) {
+
+					for (int i = 0; i < 12; i++) {
+						if (maxBoundaries < atof(splitline[i].c_str())) {
+							maxBoundaries = atof(splitline[i].c_str());
+						}
+					}
+
 					if (curveCount == 3) {
 
 						Point* tempP1 = new Point;
@@ -346,8 +351,13 @@ void loadScene(std::string file) {
 					}
 				}
 			}
-
 		}
+
+		maxX = maxBoundaries;
+		minX = -maxBoundaries;
+		maxY = maxBoundaries;
+		minY = -maxBoundaries;
+
 		inpfile.close();
 	}
 }
@@ -359,7 +369,16 @@ void loadScene(std::string file) {
 void myDisplay() {
 	glClear(GL_COLOR_BUFFER_BIT);				// clear the color buffer
 	glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
+
 	glLoadIdentity();				        // make sure transformation is "zero'd"
+
+	glOrtho(minX, maxX, minY, maxY, -100, 100);
+
+	glRotatef(xRot, 1.0, 0.0, 0.0);
+	glRotatef(yRot, 0.0, 1.0, 0.0);
+
+	glTranslatef(xTran, 0.0, 0.0);
+	glTranslatef(0.0, yTran, 0.0);
 
 	uniformTesselation();
 
@@ -372,6 +391,18 @@ void keyboard(unsigned char key, int x, int y) {
 	switch (key)  {
 	case 32: // Space key
 		exit (0);
+		break;
+	case 43: //+ key
+		maxX -= 0.2;
+		minX += 0.2;
+		maxY -= 0.2;
+		minY += 0.2;
+		break;
+	case 45: // - key
+		maxX += 0.2;
+		minX -= 0.2;
+		maxY += 0.2;
+		minY -= 0.2;
 		break;
 	case 115: //s key
 		if (smooth){
@@ -391,6 +422,41 @@ void keyboard(unsigned char key, int x, int y) {
 		}else{
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
 			wired = false;
+		}
+		break;
+	}
+}
+
+void SpecialKeys(int key, int x, int y)
+{
+	switch (key)
+	{
+	case GLUT_KEY_LEFT:
+		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
+			xRot -= 10;
+		} else {
+			xTran -= 0.1;
+		}
+		break;
+	case GLUT_KEY_RIGHT:
+		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
+			xRot += 10;
+		} else {
+			xTran += 0.1;
+		}
+		break;
+	case GLUT_KEY_UP:
+		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
+			yRot += 10;
+		} else {
+			yTran += 0.1;
+		}
+		break;
+	case GLUT_KEY_DOWN:
+		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
+			yRot -= 10;
+		} else {
+			yTran -= 0.1;
 		}
 		break;
 	}
@@ -421,8 +487,8 @@ int main(int argc, char *argv[]) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
 	// Initalize theviewport size
-	viewport.w = 400;
-	viewport.h = 400;
+	viewport.w = 800;
+	viewport.h = 800;
 
 	//The size and position of the window
 	glutInitWindowSize(viewport.w, viewport.h);
@@ -435,6 +501,8 @@ int main(int argc, char *argv[]) {
 	glutReshapeFunc(myReshape);				// function to run when the window gets resized
 	glutIdleFunc(myFrameMove);	
 	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(SpecialKeys);
+
 	glutMainLoop();							// infinite loop that will keep drawing and resizing
 	// and whatever else
 
