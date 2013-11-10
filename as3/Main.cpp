@@ -42,59 +42,59 @@ public:
 class Point {
 public:
 	GLfloat x, y, z;
-void multiplyPoint(GLfloat s, Point p){
-	x = s * p.x;
-	y = s * p.y;
-	z = s * p.z;	
-}
+	void multiplyPoint(GLfloat s, Point p){
+		x = s * p.x;
+		y = s * p.y;
+		z = s * p.z;	
+	}
 
-void addPointTwoArg(Point p1, Point p2){
-	x = p1.x + p2.x;
-	y = p1.y + p2.y;
-	z = p1.z + p2.z;
-}
+	void addPointTwoArg(Point p1, Point p2){
+		x = p1.x + p2.x;
+		y = p1.y + p2.y;
+		z = p1.z + p2.z;
+	}
 
-void addPointOneArg(Point p1){
-	x = x + p1.x;
-	y = y + p1.y;
-	z = z + p1.z;
-}
+	void addPointOneArg(Point p1){
+		x = x + p1.x;
+		y = y + p1.y;
+		z = z + p1.z;
+	}
 
-void subtractPointTwoArg(Point p1, Point p2){
-	x = p1.x - p2.x;
-	y = p1.y - p2.y;
-	z = p1.z - p2.z;
-}
+	void subtractPointTwoArg(Point p1, Point p2){
+		x = p1.x - p2.x;
+		y = p1.y - p2.y;
+		z = p1.z - p2.z;
+	}
 
-void subtractPointOneArg(Point p1){
-	x = x - p1.x;
-	y = y - p1.y;
-	z = z - p1.z;
-}
+	void subtractPointOneArg(Point p1){
+		x = x - p1.x;
+		y = y - p1.y;
+		z = z - p1.z;
+	}
 };
 
 class BCurve {
 public:
 	Point p1, p2, p3, p4;
 
-void Bernstein(GLfloat u,Point p){
-	Point a, b, c, d;
+	void Bernstein(GLfloat u,Point p){
+		Point a, b, c, d;
 
-	a.multiplyPoint(pow(u, 3.0), p1);
-	b.multiplyPoint(3.0*pow(u, 2.0)*(1.0-u), p2);
-	c.multiplyPoint(3.0*u*pow((1.0-u), 2.0), p3);
-    	d.multiplyPoint(pow((1-u),3), p4);
+		a.multiplyPoint(pow(u, 3.0), p1);
+		b.multiplyPoint(3.0*pow(u, 2.0)*(1.0-u), p2);
+		c.multiplyPoint(3.0*u*pow((1.0-u), 2.0), p3);
+		d.multiplyPoint(pow((1-u),3), p4);
 
-	p.addPointTwoArg(a, b);
-	p.addPointOneArg(c);
-	p.addPointOneArg(d);
-}
+		p.addPointTwoArg(a, b);
+		p.addPointOneArg(c);
+		p.addPointOneArg(d);
+	}
 };
 
 class BPatch {
 public:
 	BCurve c1, c2, c3, c4;
-};   
+};
 
 //****************************************************
 // Global Variables
@@ -116,13 +116,9 @@ GLfloat ambient0[]={0.0, 0.0, 0.0, 1.0};
 GLfloat specular0[]={1.0, 0.0, 0.0, 1.0};
 GLfloat light0_pos[]={1.0, 0.0, 3,0, 1.0};
 
-
-
-
 //****************************************************
-// Simple init function
+// reshape viewport if the window is resized
 //****************************************************
-
 void myReshape(int w, int h) {
 	viewport.w = w;
 	viewport.h = h;
@@ -130,13 +126,17 @@ void myReshape(int w, int h) {
 	glViewport (0,0,viewport.w,viewport.h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluOrtho2D(0, viewport.w, 0, viewport.h);
-	glOrtho(-1, 1, -1, 1, 1, -1);
+	gluOrtho2D(0, viewport.w, 0, viewport.h);
+	//glOrtho(-1, 1, -1, 1, 1, -1);
 }
 
+//****************************************************
+// Simple init function
+//****************************************************
+
 void initScene(){
-  	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
-  	myReshape(viewport.w,viewport.h);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
+	myReshape(viewport.w,viewport.h);
 
 	glEnable(GL_NORMALIZE);
 
@@ -155,32 +155,35 @@ void initScene(){
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
 }
 
+
+//*********************************************
+// Helper Methods
+//*********************************************
 /*
 void curveTraversal(patch){
-	GLfloat u = 0.0;
-	for each curve in a patch:
-		for u <= 1.0:
-			Point newPoint;
-			curve.Bernstein(u, newPoint);
-			store the newly generated points in vector or something
-			u = u + stepSize;
-		u = 0.0;
+GLfloat u = 0.0;
+for each curve in a patch:
+for u <= 1.0:
+Point newPoint;
+curve.Bernstein(u, newPoint);
+store the newly generated points in vector or something
+u = u + stepSize;
+u = 0.0;
 }
 void groupPointsToQuadrilateral(vector1, vector2, vector3, vector4){
-	
-	
+
+
 }
 void uniformTesselation(){
-	for each patch:
-		curveTraversal(patch);
-	groupPointsToQuadrilateral(vector1, vector2, vector3, vector4);
+for each patch:
+curveTraversal(patch);
+groupPointsToQuadrilateral(vector1, vector2, vector3, vector4);
 } */
 
 //****************************************************
 // File Parser
 //****************************************************
 
-/*
 void loadScene(std::string file) {
 	numPatches = 0;
 	int patchCount = 0;
@@ -295,17 +298,7 @@ void loadScene(std::string file) {
 		}
 		inpfile.close();
 	}
-} */
-
-//****************************************************
-// reshape viewport if the window is resized
-//****************************************************
-
-
-
-//*********************************************
-// Helper Methods
-//*********************************************
+}
 
 
 
@@ -327,19 +320,19 @@ void myDisplay() {
 	glLoadIdentity();				        // make sure transformation is "zero'd"
 
 
-  	glBegin(GL_POLYGON);
+	glBegin(GL_POLYGON);
 	glVertex3f(0.3f, -0.8f, -0.1f);
-  	glVertex3f(0.3f, 0.5f, -0.1f);
-  	glVertex3f(0.6f, 0.5f, 0.0f);
-  	glVertex3f(0.6f, -0.8f, 0.0f);
-  	glEnd();
-	
+	glVertex3f(0.3f, 0.5f, -0.1f);
+	glVertex3f(0.6f, 0.5f, 0.0f);
+	glVertex3f(0.6f, -0.8f, 0.0f);
+	glEnd();
 
-  	glBegin(GL_POLYGON);
+
+	glBegin(GL_POLYGON);
 	glVertex3f(-0.3f, 0.5f, -0.1f);
-  	glVertex3f(0.3f, 0.0f, -0.1f);
-  	glVertex3f(0.5f, 0.0f, 0.0f);
-  	glEnd();
+	glVertex3f(0.3f, 0.0f, -0.1f);
+	glVertex3f(0.5f, 0.0f, 0.0f);
+	glEnd();
 
 	glFlush();
 	glutSwapBuffers();					// swap buffers (we earlier set double buffer)
@@ -355,11 +348,11 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 void myFrameMove() {
-  //nothing here for now
+	//nothing here for now
 #ifdef _WIN32
 	Sleep(10);                                   //give ~10ms back to OS (so as not to waste the CPU)
 #endif
-  	glutPostRedisplay(); // forces glut to call the display function (myDisplay())
+	glutPostRedisplay(); // forces glut to call the display function (myDisplay())
 }
 
 //****************************************************
