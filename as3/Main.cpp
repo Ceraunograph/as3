@@ -155,6 +155,7 @@ void initScene(){
 // Helper Methods
 //*********************************************
 
+
 void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Point new2, Point new3, Point new4){
 	glBegin(GL_POLYGON);
 	//glNormal3f();
@@ -184,15 +185,14 @@ void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Poi
 
 void curveTraversal(BPatch patch){
 
-	Point* old1 = new Point;
-	Point* old2 = new Point;
-	Point* old3 = new Point;
-	Point* old4 = new Point;
-	Point* new1 = new Point;
-	Point* new2 = new Point;
-	Point* new3 = new Point;
-	Point* new4 = new Point;
-
+	Point old1;
+	Point old2;
+	Point old3;
+	Point old4;
+	Point new1;
+	Point new2;
+	Point new3;
+	Point new4;
 
 	GLfloat old_u = 0.0;
 
@@ -223,13 +223,21 @@ void curveTraversal(BPatch patch){
 
 		old_u = new_u;
 
+
 	}
 }
 
 void uniformTesselation(){
+<<<<<<< HEAD
 	for(int i = 0; i < bPatches.size(); i++){
 		curveTraversal(*(bPatches.at(i)));
 	}
+=======
+	for(int i = 0; i < bPatches.size(); i ++){
+		curveTraversal(*(bPatches.at(i)));
+}
+
+>>>>>>> 77c11688a55eccc7bb7b9aa0db2cb75ea578f9e8
 } 
 
 //****************************************************
