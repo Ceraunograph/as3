@@ -6,7 +6,7 @@ ifeq ($(shell sw_vers 2>/dev/null | grep Mac | awk '{ print $$2}'),Mac)
     	-lGL -lGLU -lm -lstdc++
 else
 	CFLAGS = -g -DGL_GLEXT_PROTOTYPES -Ias3/glut-3.7.6-bin
-	LDFLAGS = -lglut -lGL
+	LDFLAGS = -lglut -lGLU 
 endif
 	
 RM = /bin/rm -f 
