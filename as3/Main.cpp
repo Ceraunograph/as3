@@ -154,26 +154,85 @@ void initScene(){
 //*********************************************
 // Helper Methods
 //*********************************************
-/*
-void curveTraversal(patch){
-GLfloat u = 0.0;
-for each curve in a patch:
-for u <= 1.0:
-Point newPoint;
-curve.Bernstein(u, newPoint);
-store the newly generated points in vector or something
-u = u + stepSize;
-u = 0.0;
-}
-void groupPointsToQuadrilateral(vector1, vector2, vector3, vector4){
 
 
+
+
+
+
+void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Point new2, Point new3, Point new4){
+	glBegin(GL_POLYGON);
+	//glNormal3f();
+	glVertex3f(old1.x, old1.y, old1.z);
+	glVertex3f(new1.x, new1.y, new1.z);
+	glVertex3f(new2.x, new2.y, new2.z);
+	glVertex3f(old2.x, old2.y, old2.z);
+	glEnd();
+
+	glBegin(GL_POLYGON);
+	//glNormal3f();
+	glVertex3f(old2.x, old2.y, old2.z);
+	glVertex3f(new2.x, new2.y, new2.z);
+	glVertex3f(new3.x, new3.y, new3.z);
+	glVertex3f(old3.x, old3.y, old3.z);
+	glEnd();
+
+	glBegin(GL_POLYGON);
+	//glNormal3f();
+	glVertex3f(old3.x, old3.y, old3.z);
+	glVertex3f(new3.x, new1.y, new3.z);
+	glVertex3f(new4.x, new2.y, new4.z);
+	glVertex3f(old4.x, old4.y, old4.z);
+	glEnd();
 }
+
+
+void curveTraversal(BPatch patch){
+	Point old1;
+	Point old2;
+	Point old3;
+	Point old4;
+	Point new1;
+	Point new2;
+	Point new3;
+	Point new4;
+
+	GLfloat old_u = 0.0;
+
+	patch.c1.Bernstein(old_u, old1);
+	patch.c2.Bernstein(old_u, old2);
+	patch.c3.Bernstein(old_u, old3);
+	patch.c4.Bernstein(old_u, old4);
+	for (GLfloat u = 0.0; u < 1.0; u += stepSize){
+		GLfloat new_u = old_u + stepSize;
+
+		if (new_u > 1.0){
+			new_u = 1.0;
+		}
+
+		patch.c1.Bernstein(new_u, new1);
+		patch.c2.Bernstein(new_u, new2);
+		patch.c3.Bernstein(new_u, new3);
+		patch.c4.Bernstein(new_u, new4);
+
+		drawPolygon(old1, old2, old3, old4, new1, new2, new3, new4);
+
+		old1 = new1;
+		old2 = new2;
+		old3 = new3;
+		old4 = new4;
+		
+		old_u = new_u; 
+
+	}
+}
+
 void uniformTesselation(){
-for each patch:
-curveTraversal(patch);
-groupPointsToQuadrilateral(vector1, vector2, vector3, vector4);
-} */
+	for(int i = 0; i < bPatches.size(); i ++){
+		curveTraversal(*(bPatches.at(i)));
+}
+
+} 
 
 //****************************************************
 // File Parser
