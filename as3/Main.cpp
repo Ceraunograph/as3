@@ -330,12 +330,14 @@ void keyboard(unsigned char key, int x, int y) {
 		exit (0);
 		break;
 	case 115: //s key
-		if (!smooth){
+		if (smooth){
 			glEnable(GL_FLAT);
 			glShadeModel(GL_FLAT);
+			smooth = false;
 		}else{
 			glEnable(GL_SMOOTH);
 			glShadeModel(GL_SMOOTH);
+			smooth = true;
 		}
 		break;
 	case 119: //w key
