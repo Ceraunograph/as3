@@ -105,9 +105,9 @@ GLfloat stepSize;
 std::vector<BPatch*> bPatches;
 int numPatches;
 
-
 // Wired Mode or Filled Mode
-bool wired = true;
+bool wired = false;
+bool smooth = false;
 
 //Light Source Information
 //Light Zero
@@ -126,7 +126,8 @@ void myReshape(int w, int h) {
 	glViewport (0,0,viewport.w,viewport.h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0, viewport.w, 0, viewport.h);
+	gluOrtho2D(-1, 1, -1, 1);
+	//gluOrtho2D(0, viewport.w, 0, viewport.h);
 	//glOrtho(-1, 1, -1, 1, 1, -1);
 }
 
@@ -139,12 +140,6 @@ void initScene(){
 	myReshape(viewport.w,viewport.h);
 
 	glEnable(GL_NORMALIZE);
-
-	if (wired){
-		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-	}else{
-		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
-	}
 
 	//Enable Light Source Number Zero
 	glEnable(GL_LIGHTING);
@@ -301,16 +296,6 @@ void loadScene(std::string file) {
 }
 
 
-
-//****************************************************
-// A routine to set a pixel by drawing a GL point.  This is not a
-// general purpose routine as it assumes a lot of stuff specific to
-// this example.
-//****************************************************
-
-
-
-
 //****************************************************
 // function that does the actual drawing of stuff
 //***************************************************
@@ -344,6 +329,24 @@ void keyboard(unsigned char key, int x, int y) {
 	case 32: // Space key
 		exit (0);
 		break;
+	case 115: //s key
+		if (!smooth){
+			glEnable(GL_FLAT);
+			glShadeModel(GL_FLAT);
+		}else{
+			glEnable(GL_SMOOTH);
+			glShadeModel(GL_SMOOTH);
+		}
+		break;
+	case 119: //w key
+		if (!wired){
+			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+			wired = true;
+		}else{
+			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
+			wired = false;
+		}
+		break;
 	}
 }
 
@@ -360,10 +363,10 @@ void myFrameMove() {
 //****************************************************
 int main(int argc, char *argv[]) {
 
-	//std::string filename = argv[1];
-	//GLfloat subdivision = atof(argv[2]);
+	std::string filename = argv[1];
+	GLfloat subdivision = atof(argv[2]);
 
-	//loadScene(filename);
+	loadScene(filename);
 
 	//This initializes glut
 	glutInit(&argc, argv);
