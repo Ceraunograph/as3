@@ -77,7 +77,7 @@ class BCurve {
 public:
 	Point p1, p2, p3, p4;
 
-	void Bernstein(GLfloat u,Point p){
+	void Bernstein(GLfloat u,Point* p){
 		Point a, b, c, d;
 
 		a.multiplyPoint(pow(u, 3.0), p1);
@@ -85,9 +85,9 @@ public:
 		c.multiplyPoint(3.0*u*pow((1.0-u), 2.0), p3);
 		d.multiplyPoint(pow((1.0-u),3.0), p4);
 
-		p.addPointTwoArg(a, b);
-		p.addPointOneArg(c);
-		p.addPointOneArg(d);
+		p->addPointTwoArg(a, b);
+		p->addPointOneArg(c);
+		p->addPointOneArg(d);
 	}
 };
 
@@ -155,27 +155,6 @@ void initScene(){
 // Helper Methods
 //*********************************************
 
-<<<<<<< HEAD
-void curveTraversal(){
-
-	for (GLfloat u = 0.0; u < 1.0; u += stepSize) {
-		GLfloat old_u = 0.0;
-		GLfloat new_u = old_u + stepSize;
-		if (new_u > 1.0) {
-			new_u = 1.0;
-		}
-		old_u = new_u;
-	}
-	Point newPoint;
-	curve.Bernstein(u, newPoint);
-	store the newly generated points in vector or something
-		u = u + stepSize;
-	u = 0.0;
-=======
-
-
-
-
 
 void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Point new2, Point new3, Point new4){
 	glBegin(GL_POLYGON);
@@ -201,19 +180,18 @@ void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Poi
 	glVertex3f(new4.x, new2.y, new4.z);
 	glVertex3f(old4.x, old4.y, old4.z);
 	glEnd();
->>>>>>> 77c11688a55eccc7bb7b9aa0db2cb75ea578f9e8
 }
 
 
 void curveTraversal(BPatch patch){
-	Point old1;
-	Point old2;
-	Point old3;
-	Point old4;
-	Point new1;
-	Point new2;
-	Point new3;
-	Point new4;
+	Point* old1 = new Point;
+	Point* old2 = new Point;
+	Point* old3 = new Point;
+	Point* old4 = new Point;
+	Point* new1 = new Point;
+	Point* new2 = new Point;
+	Point* new3 = new Point;
+	Point* new4 = new Point;
 
 	GLfloat old_u = 0.0;
 
@@ -221,6 +199,7 @@ void curveTraversal(BPatch patch){
 	patch.c2.Bernstein(old_u, old2);
 	patch.c3.Bernstein(old_u, old3);
 	patch.c4.Bernstein(old_u, old4);
+
 	for (GLfloat u = 0.0; u < 1.0; u += stepSize){
 		GLfloat new_u = old_u + stepSize;
 
@@ -233,30 +212,26 @@ void curveTraversal(BPatch patch){
 		patch.c3.Bernstein(new_u, new3);
 		patch.c4.Bernstein(new_u, new4);
 
-		drawPolygon(old1, old2, old3, old4, new1, new2, new3, new4);
+		drawPolygon(*old1, *old2, *old3, *old4, *new1, *new2, *new3, *new4);
 
 		old1 = new1;
 		old2 = new2;
 		old3 = new3;
 		old4 = new4;
-		
-		old_u = new_u; 
 
+		old_u = new_u;
 	}
 }
 
 void uniformTesselation(){
-
-	for(int i = 0; i < bPatches.size(); i ++){
+	for(int i = 0; i < bPatches.size(); i++){
 		curveTraversal(*(bPatches.at(i)));
-}
-
+	}
 } 
 
 //****************************************************
 // File Parser
 //****************************************************
-
 void loadScene(std::string file) {
 	numPatches = 0;
 	int patchCount = 0;
@@ -382,20 +357,7 @@ void myDisplay() {
 	glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
 	glLoadIdentity();				        // make sure transformation is "zero'd"
 
-
-	glBegin(GL_POLYGON);
-	glVertex3f(0.3f, -0.8f, -0.1f);
-	glVertex3f(0.3f, 0.5f, -0.1f);
-	glVertex3f(0.6f, 0.5f, 0.0f);
-	glVertex3f(0.6f, -0.8f, 0.0f);
-	glEnd();
-
-
-	glBegin(GL_POLYGON);
-	glVertex3f(-0.3f, 0.5f, -0.1f);
-	glVertex3f(0.3f, 0.0f, -0.1f);
-	glVertex3f(0.5f, 0.0f, 0.0f);
-	glEnd();
+	uniformTesselation();
 
 	glFlush();
 	glutSwapBuffers();					// swap buffers (we earlier set double buffer)
@@ -444,7 +406,7 @@ void myFrameMove() {
 int main(int argc, char *argv[]) {
 
 	std::string filename = argv[1];
-	GLfloat subdivision = atof(argv[2]);
+	stepSize = atof(argv[2]);
 
 	loadScene(filename);
 
