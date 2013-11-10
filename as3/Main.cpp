@@ -154,6 +154,7 @@ void initScene(){
 //*********************************************
 // Helper Methods
 //*********************************************
+
 void drawPolygon(Point old1, Point old2, Point old3, Point old4, Point new1, Point new2, Point new3, Point new4){
 	glBegin(GL_POLYGON);
 	//glNormal3f();
@@ -192,13 +193,13 @@ void curveTraversal(BPatch patch){
 	Point* new3 = new Point;
 	Point* new4 = new Point;
 
+
 	GLfloat old_u = 0.0;
 
 	patch.c1.Bernstein(old_u, old1);
 	patch.c2.Bernstein(old_u, old2);
 	patch.c3.Bernstein(old_u, old3);
 	patch.c4.Bernstein(old_u, old4);
-
 
 	for (GLfloat u = 0.0; u < 1.0; u += stepSize){
 		GLfloat new_u = old_u + stepSize;
@@ -213,7 +214,6 @@ void curveTraversal(BPatch patch){
 		patch.c4.Bernstein(new_u, new4);
 
 		drawPolygon(old1, old2, old3, old4, new1, new2, new3, new4);
-
 
 		old1 = new1;
 		old2 = new2;
