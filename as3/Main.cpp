@@ -83,7 +83,7 @@ public:
 		a.multiplyPoint(pow(u, 3.0), p1);
 		b.multiplyPoint(3.0*pow(u, 2.0)*(1.0-u), p2);
 		c.multiplyPoint(3.0*u*pow((1.0-u), 2.0), p3);
-		d.multiplyPoint(pow((1-u),3), p4);
+		d.multiplyPoint(pow((1.0-u),3.0), p4);
 
 		p.addPointTwoArg(a, b);
 		p.addPointOneArg(c);
@@ -154,26 +154,32 @@ void initScene(){
 //*********************************************
 // Helper Methods
 //*********************************************
-/*
-void curveTraversal(patch){
-GLfloat u = 0.0;
-for each curve in a patch:
-for u <= 1.0:
-Point newPoint;
-curve.Bernstein(u, newPoint);
-store the newly generated points in vector or something
-u = u + stepSize;
-u = 0.0;
+
+void curveTraversal(){
+
+	for (GLfloat u = 0.0; u < 1.0; u += stepSize) {
+		GLfloat old_u = 0.0;
+		GLfloat new_u = old_u + stepSize;
+		if (new_u > 1.0) {
+			new_u = 1.0;
+		}
+		old_u = new_u;
+	}
+	Point newPoint;
+	curve.Bernstein(u, newPoint);
+	store the newly generated points in vector or something
+		u = u + stepSize;
+	u = 0.0;
 }
 void groupPointsToQuadrilateral(vector1, vector2, vector3, vector4){
 
 
 }
 void uniformTesselation(){
-for each patch:
-curveTraversal(patch);
-groupPointsToQuadrilateral(vector1, vector2, vector3, vector4);
-} */
+	for each patch:
+	curveTraversal(patch);
+	groupPointsToQuadrilateral(vector1, vector2, vector3, vector4);
+} 
 
 //****************************************************
 // File Parser
