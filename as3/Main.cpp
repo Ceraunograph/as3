@@ -60,6 +60,11 @@ public:
 	BCurve c1, c2, c3, c4;
 };
 
+class Triangle {
+public:
+	Point p1, p2, p3, pc1, pc2, pc3;
+};
+
 //****************************************************
 // Global Variables
 //****************************************************
@@ -85,9 +90,9 @@ GLfloat minY = -1.0;
 
 //Light Source Information
 //Light Zero
-GLfloat diffuse0[]={0.5, 0.0, 0.0, 1.0};
+GLfloat diffuse0[]={0.2, 0.2, 0.2, 1.0};
 GLfloat ambient0[]={1.0, 0.0, 0.0, 1.0};
-GLfloat specular0[]={1.0, 0.0, 0.0, 1.0};
+GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
 GLfloat light0_pos[]={1.0, 0.0, 3,0, 1.0};
 
 //****************************************************
@@ -150,6 +155,39 @@ Point subtractPoint(Point p1, Point p2){
 	return r;
 }
 
+Point normalize(Point p){
+	Point r;
+	GLfloat len = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+	r.x = p.x / len;
+	r.y = p.y / len;
+	r.z = p.z / len;
+	return r;
+}
+
+Point crossProduct(Point p1, Point p2){
+	Point r;
+	r.x = p1.y * p2.z - p1.z * p2.y;
+	r.y = p1.z * p2.x - p1.x * p2.z;
+	r.z = p1.x * p2.y - p1.y * p2.x;
+	return r;
+}
+
+Point getNormal(Point p1, Point p2, Point p3){
+	return normalize(crossProduct(normalize(subtractPoint(p3, p1)), normalize(subtractPoint(p2, p1))));
+}
+
+Point midPoint(Point p1, Point p2) {
+	Point r;
+	r.x = (p1.x + p2.x)/2.0;
+	r.y = (p1.y + p2.y)/2.0;
+	r.z = (p1.z + p2.z)/2.0;
+	return r;
+}
+
+GLfloat distance(Point p1, Point p2) {
+	return sqrt(pow(p1.x-p2.x,2.0)+pow(p1.y-p2.y,2.0)+pow(p1.z-p2.z,2.0));
+}
+
 Point bernstein(GLfloat u, BCurve curve){
 	Point a, b, c, d, r;
 
@@ -162,14 +200,60 @@ Point bernstein(GLfloat u, BCurve curve){
 	return r;
 }
 
+Point patchPoint(GLfloat u, GLfloat v, BPatch patch) {
+	BCurve c1;
+
+	c1.p1 = bernstein(u, patch.c1);
+	c1.p2 = bernstein(u, patch.c2);
+	c1.p3 = bernstein(u, patch.c3);
+	c1.p4 = bernstein(u, patch.c4);
+
+	return bernstein(v, c1);
+}
+
 void drawPolygon(Point p1, Point p2, Point p3, Point p4){
+	Point n;
+	n = getNormal(p1, p2, p3);
 	glBegin(GL_POLYGON);
-	//glNormal3f();
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p1.x, p1.y, p1.z);
 	glVertex3f(p2.x, p2.y, p2.z);
 	glVertex3f(p4.x, p4.y, p4.z);
 	glVertex3f(p3.x, p3.y, p3.z);
 	glEnd();
+}
+
+void drawTriangle(Point p1, Point p2, Point p3){
+	glBegin(GL_TRIANGLES);
+	glVertex3f(p1.x, p1.y, p1.z);
+	glVertex3f(p2.x, p2.y, p2.z);
+	glVertex3f(p3.x, p3.y, p3.z);
+	glEnd();
+}
+
+void subdivideTriangle(Triangle tri, BPatch patch) {
+	bool edge1 = false;
+	bool edge2 = false;
+	bool edge3 = false;
+
+	Point midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3;
+
+	midPoint1 = midPoint(tri.p1, tri.p2);
+	midPoint2 = midPoint(tri.p2, tri.p3);
+	midPoint3 = midPoint(tri.p1, tri.p3);
+
+	//midPara1 = midPoint(patchPoint(tri.pc1, patch), patchPoint(tri.pc2, patch));
+
+	
+	if (distance(midPoint(patchPoint(tri.pc1, patch), patchPoint(tri.pc2, patch)), midPoint1) > stepSize) {
+		edge1 = true;
+	}
+	if (distance(midPoint(patchPoint(tri.pc2, patch), patchPoint(tri.pc3, patch)), midPoint2) > stepSize) {
+		edge2 = true;
+	}
+	if (distance(midPoint(patchPoint(tri.pc1, patch), patchPoint(tri.pc3, patch)), midPoint3) > stepSize) {
+		edge3 = true;
+	}
 }
 
 void curveTraversal(BPatch patch){
@@ -223,11 +307,59 @@ void curveTraversal(BPatch patch){
 	}
 }
 
+void adaptiveTraversal(BPatch patch) {
+	Triangle t1, t2;
+	bool edge1, edge2, edge3;
+
+	t1.p1 = patch.c1.p1;
+	t1.p2 = patch.c1.p4;
+	t1.p3 = patch.c4.p1;
+
+	/* Parametric Coordinates for triangle 1 (represented as point with z = 0.0) */
+	t1.pc1.x = 0.0;
+	t1.pc1.y = 0.0;
+	t1.pc1.z = 0.0;
+
+	t1.pc2.x = 1.0;
+	t1.pc2.y = 0.0;
+	t1.pc2.z = 0.0;
+
+	t1.pc3.x = 0.0;
+	t1.pc3.y = 1.0;
+	t1.pc3.z = 0.0;
+
+	t2.p1 = patch.c4.p1;
+	t2.p2 = patch.c1.p4;
+	t2.p3 = patch.c4.p4;
+
+	/* Parametric Coordinates for triangle 2 (represented as point with z = 0.0) */
+	t2.pc1.x = 0.0;
+	t2.pc1.y = 1.0;
+	t2.pc1.z = 0.0;
+
+	t2.pc2.x = 1.0;
+	t2.pc2.y = 0.0;
+	t2.pc2.z = 0.0;
+
+	t2.pc3.x = 1.0;
+	t2.pc3.y = 1.0;
+	t2.pc3.z = 0.0;
+
+	subdivideTriangle(t1, patch);
+	subdivideTriangle(t2, patch);
+}
+
 void uniformTesselation(){
 	for(unsigned int i = 0; i < bPatches.size(); i++){
 		curveTraversal(*(bPatches.at(i)));
 	}
-} 
+}
+
+void adaptiveTriangulation() {
+	for(unsigned int i = 0; i < bPatches.size(); i++){
+		adaptiveTraversal(*(bPatches.at(i)));
+	}
+}
 
 //****************************************************
 // File Parser
