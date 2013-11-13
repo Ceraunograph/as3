@@ -90,7 +90,7 @@ GLfloat minY = -1.0;
 
 //Light Source Information
 //Light Zero
-GLfloat diffuse0[]={0.2, 0.2, 0.2, 1.0};
+GLfloat diffuse0[]={0.8, 0.2, 0.2, 1.0};
 GLfloat ambient0[]={1.0, 0.0, 0.0, 1.0};
 GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
 GLfloat light0_pos[]={1.0, 0.0, 3,0, 1.0};
@@ -184,8 +184,8 @@ Point midPoint(Point p1, Point p2) {
 	return r;
 }
 
-GLfloat distance(Point p1, Point p2) {
-	return sqrt(pow(p1.x-p2.x,2.0)+pow(p1.y-p2.y,2.0)+pow(p1.z-p2.z,2.0));
+GLfloat distancePoint(Point p1, Point p2) {
+	return sqrt(pow(p1.x-p2.x, 2)+pow(p1.y-p2.y, 2) + pow(p1.z-p2.z, 2));
 }
 
 Point bernstein(GLfloat u, BCurve curve){
@@ -231,29 +231,129 @@ void drawTriangle(Point p1, Point p2, Point p3){
 	glEnd();
 }
 
-void subdivideTriangle(Triangle tri, BPatch patch) {
+void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
+	Triangle* n1 = new Triangle;
+	Triangle* n2 = new Triangle;
+	Triangle* n3 = new Triangle;
+	Triangle* n4 = new Triangle;
+
 	bool edge1 = false;
 	bool edge2 = false;
 	bool edge3 = false;
 
-	Point midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3;
+	Point midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
 
 	midPoint1 = midPoint(tri.p1, tri.p2);
 	midPoint2 = midPoint(tri.p2, tri.p3);
 	midPoint3 = midPoint(tri.p1, tri.p3);
 
-	//midPara1 = midPoint(patchPoint(tri.pc1, patch), patchPoint(tri.pc2, patch));
+	midPara1 = midPoint(tri.pc1, tri.pc2);
+	midPara2 = midPoint(tri.pc2, tri.pc3);
+	midPara3 = midPoint(tri.pc1, tri.pc3);
 
-	
-	if (distance(midPoint(patchPoint(tri.pc1, patch), patchPoint(tri.pc2, patch)), midPoint1) > stepSize) {
+	midReal1 = patchPoint(midPara1.x,midPara1.y,patch);
+	midReal2 = patchPoint(midPara2.x,midPara2.y,patch);
+	midReal3 = patchPoint(midPara3.x,midPara3.y,patch);
+
+	if (distancePoint(midReal1, midPoint1) > stepSize) {
 		edge1 = true;
 	}
-	if (distance(midPoint(patchPoint(tri.pc2, patch), patchPoint(tri.pc3, patch)), midPoint2) > stepSize) {
+	if (distancePoint(midReal2, midPoint2) > stepSize) {
 		edge2 = true;
 	}
-	if (distance(midPoint(patchPoint(tri.pc1, patch), patchPoint(tri.pc3, patch)), midPoint3) > stepSize) {
+	if (distancePoint(midReal3, midPoint3) > stepSize) {
 		edge3 = true;
 	}
+	if (depth > 3) {
+		drawTriangle(tri.p1, tri.p2, tri.p3);
+	} else if (edge1 && edge2 && edge3) {
+		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = midReal1;
+		n1->p3 = midReal3;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = midPara1;
+		n1->pc3 = midPara3;
+
+		//New Triangle 2
+		n2->p1 = midReal1;
+		n2->p2 = tri.p2;
+		n2->p3 = midReal2;
+
+		n2->pc1 = midPara1;
+		n2->pc2 = tri.pc2;
+		n2->pc3 = midPara2;
+
+		//New Triangle 3
+		n3->p1 = midReal3;
+		n3->p2 = midReal2;
+		n3->p3 = tri.p3;
+
+		n3->pc1 = midPara3;
+		n3->pc2 = midPara2;
+		n3->pc3 = tri.pc3;
+
+		//New Triangle 4
+		n4->p1 = midReal1;
+		n4->p2 = midReal2;
+		n4->p3 = midReal3;
+
+		n4->pc1 = midPara1;
+		n4->pc2 = midPara2;
+		n4->pc3 = midPara3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
+		subdivideTriangle(*n3, patch, depth+1);
+		subdivideTriangle(*n4, patch, depth+1);
+
+	} else if (edge1 && edge3) {
+		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = midReal1;
+		n1->p3 = midReal3;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = midPara1;
+		n1->pc3 = midPara3;
+
+		//New Triangle 2
+		n2->p1 = midReal3;
+		n2->p2 = midReal1;
+		n2->p3 = tri.p3;
+
+		n2->pc1 = midPara3;
+		n2->pc2 = midPara1;
+		n2->pc3 = tri.pc3;
+
+		//New Triangle 3
+		n3->p1 = midReal1;
+		n3->p2 = tri.p2;
+		n3->p3 = tri.p3;
+
+		n3->pc1 = midPara1;
+		n3->pc2 = tri.pc2;
+		n3->pc3 = tri.pc3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
+		subdivideTriangle(*n3, patch, depth+1);
+
+ 	} else if (edge2 && edge3) {
+		//New Triangle 1
+	} else if (edge1 && edge2) {
+
+	} else if (edge1) {
+
+	} else if (edge2) {
+
+	} else if (edge3) {
+		
+	} else {
+		drawTriangle(tri.p1, tri.p2, tri.p3);
+	}
+	delete n1, n2, n3, n4;
 }
 
 void curveTraversal(BPatch patch){
@@ -309,8 +409,8 @@ void curveTraversal(BPatch patch){
 
 void adaptiveTraversal(BPatch patch) {
 	Triangle t1, t2;
-	bool edge1, edge2, edge3;
 
+	/* Triangle 1 real-world coordinates */
 	t1.p1 = patch.c1.p1;
 	t1.p2 = patch.c1.p4;
 	t1.p3 = patch.c4.p1;
@@ -328,6 +428,8 @@ void adaptiveTraversal(BPatch patch) {
 	t1.pc3.y = 1.0;
 	t1.pc3.z = 0.0;
 
+
+	/* Triangle 2 real-world coordinates */
 	t2.p1 = patch.c4.p1;
 	t2.p2 = patch.c1.p4;
 	t2.p3 = patch.c4.p4;
@@ -344,9 +446,10 @@ void adaptiveTraversal(BPatch patch) {
 	t2.pc3.x = 1.0;
 	t2.pc3.y = 1.0;
 	t2.pc3.z = 0.0;
-
-	subdivideTriangle(t1, patch);
-	subdivideTriangle(t2, patch);
+	
+	subdivideTriangle(t1, patch, 0);
+	subdivideTriangle(t2, patch, 0);
+	
 }
 
 void uniformTesselation(){
@@ -512,7 +615,8 @@ void myDisplay() {
 	glTranslatef(xTran, 0.0, 0.0);
 	glTranslatef(0.0, yTran, 0.0);
 
-	uniformTesselation();
+	//uniformTesselation();
+	adaptiveTriangulation();
 
 	glFlush();
 	glutSwapBuffers();					// swap buffers (we earlier set double buffer)
