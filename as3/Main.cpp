@@ -177,7 +177,7 @@ Point crossProduct(Point p1, Point p2){
 }
 
 Point getNormal(Point p1, Point p2, Point p3){
-	return crossProduct(subtractPoint(p2, p1), subtractPoint(p3, p1));
+	return crossProduct(subtractPoint(p3, p1), subtractPoint(p2, p1));
 }
 
 Point midPoint(Point p1, Point p2) {
@@ -189,7 +189,7 @@ Point midPoint(Point p1, Point p2) {
 }
 
 GLfloat distancePoint(Point p1, Point p2) {
-	return sqrt(pow(p1.x-p2.x, 2.0)+pow(p1.y-p2.y, 2.0) + pow(p1.z-p2.z, 2.0));
+	return sqrt(pow(p1.x-p2.x, 2.0) + pow(p1.y-p2.y, 2.0) + pow(p1.z-p2.z, 2.0));
 }
 
 Point bernstein(GLfloat u, BCurve curve){
@@ -818,28 +818,28 @@ void SpecialKeys(int key, int x, int y)
 	{
 	case GLUT_KEY_LEFT:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			xRot -= 10;
+			xRot += 10;
 		} else {
 			xTran -= 0.1;
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			xRot += 10;
+			xRot -= 10;
 		} else {
 			xTran += 0.1;
 		}
 		break;
 	case GLUT_KEY_UP:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			yRot += 10;
+			yRot -= 10;
 		} else {
 			yTran += 0.1;
 		}
 		break;
 	case GLUT_KEY_DOWN:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			yRot -= 10;
+			yRot += 10;
 		} else {
 			yTran -= 0.1;
 		}
@@ -872,7 +872,7 @@ int main(int argc, char *argv[]) {
 	glutInit(&argc, argv);
 
 	//This tells glut to use a double-buffered window with red, green, and blue channels 
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
 	// Initalize theviewport size
 	viewport.w = 1000;
