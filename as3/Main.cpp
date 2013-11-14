@@ -93,9 +93,9 @@ GLfloat minY = -1.0;
 //Light Source Information
 //Light Zero
 GLfloat diffuse0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat ambient0[]={1.0, 1.0, 1.0, 1.0};
+GLfloat ambient0[]={0.5, 0.0, 0.0, 1.0};
 GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat light0_pos[]={1.0, 0.0, 3,0, 1.0};
+GLfloat light0_pos[]={3.0, 3.0, 0,0, 1.0};
 
 //****************************************************
 // reshape viewport if the window is resized
@@ -117,8 +117,7 @@ void myReshape(int w, int h) {
 void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
 	myReshape(viewport.w,viewport.h);
-
-	//glEnable(GL_NORMALIZE);
+	glEnable(GL_NORMALIZE);
 
 	//Enable Light Source Number Zero
 	glEnable(GL_LIGHTING);
@@ -127,9 +126,18 @@ void initScene(){
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
+
+	
+	glDepthRange(0,1);
+	glClearDepth(1.0f);   
+	glDepthFunc(GL_LEQUAL); 
+	glEnable (GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	
 }
 
-//*********************************************
+//*********************************************w
 // Helper Methods
 //********************************************* 
 
@@ -175,7 +183,7 @@ Point crossProduct(Point p1, Point p2){
 }
 
 Point getNormal(Point p1, Point p2, Point p3){
-	return normalize(crossProduct(normalize(subtractPoint(p3, p1)), normalize(subtractPoint(p2, p1))));
+	return crossProduct(subtractPoint(p3, p1), subtractPoint(p2, p1));
 }
 
 Point midPoint(Point p1, Point p2) {
@@ -218,10 +226,13 @@ void drawPolygon(Point p1, Point p2, Point p3, Point p4){
 	Point n;
 	n = getNormal(p1, p2, p3);
 	glBegin(GL_POLYGON);
-	//glNormal3f(n.x, n.y, n.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p1.x, p1.y, p1.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p2.x, p2.y, p2.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p4.x, p4.y, p4.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p3.x, p3.y, p3.z);
 	glEnd();
 }
@@ -230,9 +241,11 @@ void drawTriangle(Point p1, Point p2, Point p3){
 	Point n;
 	n = getNormal(p3, p1, p2);
 	glBegin(GL_POLYGON);
-	//glNormal3f(n.x, n.y, n.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p1.x, p1.y, p1.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p2.x, p2.y, p2.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p3.x, p3.y, p3.z);
 	glEnd();
 }
@@ -768,11 +781,11 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 115: //s key
 		if (smooth){
-			glEnable(GL_FLAT);
+			//glEnable(GL_FLAT);
 			glShadeModel(GL_FLAT);
 			smooth = false;
 		}else{
-			glEnable(GL_SMOOTH);
+			//glEnable(GL_SMOOTH);
 			glShadeModel(GL_SMOOTH);
 			smooth = true;
 		}
