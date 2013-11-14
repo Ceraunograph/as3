@@ -185,30 +185,31 @@ Point midPoint(Point p1, Point p2) {
 }
 
 GLfloat distancePoint(Point p1, Point p2) {
-	return sqrt(pow(p1.x-p2.x, 2)+pow(p1.y-p2.y, 2) + pow(p1.z-p2.z, 2));
+	return sqrt(pow(p1.x-p2.x, 2.0)+pow(p1.y-p2.y, 2.0) + pow(p1.z-p2.z, 2.0));
 }
 
 Point bernstein(GLfloat u, BCurve curve){
-	Point a, b, c, d, r;
+	Point a, b, c, d, e;
 
-	a = multiplyPoint(pow(u, 3.0), curve.p1);
-	b = multiplyPoint(3.0*pow(u, 2.0)*(1.0-u), curve.p2);
-	c = multiplyPoint(3.0*u*pow((1.0-u), 2.0), curve.p3);
-	d = multiplyPoint(pow((1.0-u),3.0), curve.p4);
+	a = addPoint(multiplyPoint((1.0-u), curve.p1), multiplyPoint(u, curve.p2));
+	b = addPoint(multiplyPoint((1.0-u), curve.p2), multiplyPoint(u, curve.p3));
+	c = addPoint(multiplyPoint((1.0-u), curve.p3), multiplyPoint(u, curve.p4));
 
-	r = addPoint(addPoint(a, b), addPoint(c, d));
-	return r;
+	d = addPoint(multiplyPoint((1.0-u), a), multiplyPoint(u, b));
+	e = addPoint(multiplyPoint((1.0-u), b), multiplyPoint(u, c));
+
+	return addPoint(multiplyPoint((1.0-u), d), multiplyPoint(u, e));
 }
 
 Point patchPoint(GLfloat u, GLfloat v, BPatch patch) {
-	BCurve c1;
+	BCurve curve;
 
-	c1.p1 = bernstein(u, patch.c1);
-	c1.p2 = bernstein(u, patch.c2);
-	c1.p3 = bernstein(u, patch.c3);
-	c1.p4 = bernstein(u, patch.c4);
+	curve.p1 = bernstein(u, patch.c1);
+	curve.p2 = bernstein(u, patch.c2);
+	curve.p3 = bernstein(u, patch.c3);
+	curve.p4 = bernstein(u, patch.c4);
 
-	return bernstein(v, c1);
+	return bernstein(v, curve);
 }
 
 void drawPolygon(Point p1, Point p2, Point p3, Point p4){
@@ -261,9 +262,9 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 	*midPara2 = midPoint(tri.pc2, tri.pc3);
 	*midPara3 = midPoint(tri.pc1, tri.pc3);
 
-	*midReal1 = patchPoint(midPara1->x, midPara1->y,patch);
-	*midReal2 = patchPoint(midPara2->x, midPara2->y,patch);
-	*midReal3 = patchPoint(midPara3->x, midPara3->y,patch);
+	*midReal1 = patchPoint(midPara1->x, midPara1->y, patch);
+	*midReal2 = patchPoint(midPara2->x, midPara2->y, patch);
+	*midReal3 = patchPoint(midPara3->x, midPara3->y, patch);
 
 	if (distancePoint(*midReal1, *midPoint1) > stepSize) {
 		edge1 = true;
@@ -275,232 +276,230 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		edge3 = true;
 	}
 
-	if (depth > 5) {
-		drawTriangle(tri.p1, tri.p2, tri.p3);
-	} else if (edge1 && edge2 && edge3) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = *midReal1;
-		n1->p3 = *midReal3;
+	if (edge1 && edge2 && edge3) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = *midReal1;
+        n1->p3 = *midReal3;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = *midPara1;
-		n1->pc3 = *midPara3;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = *midPara1;
+        n1->pc3 = *midPara3;
 
-		//New Triangle 2
-		n2->p1 = *midReal1;
-		n2->p2 = tri.p2;
-		n2->p3 = *midReal2;
+        //New Triangle 2
+        n2->p1 = *midReal1;
+        n2->p2 = tri.p2;
+        n2->p3 = *midReal2;
 
-		n2->pc1 = *midPara1;
-		n2->pc2 = tri.pc2;
-		n2->pc3 = *midPara2;
+        n2->pc1 = *midPara1;
+        n2->pc2 = tri.pc2;
+        n2->pc3 = *midPara2;
 
-		//New Triangle 3
-		n3->p1 = *midReal3;
-		n3->p2 = *midReal2;
-		n3->p3 = tri.p3;
+        //New Triangle 3
+        n3->p1 = *midReal3;
+        n3->p2 = *midReal2;
+        n3->p3 = tri.p3;
 
-		n3->pc1 = *midPara3;
-		n3->pc2 = *midPara2;
-		n3->pc3 = tri.pc3;
+        n3->pc1 = *midPara3;
+        n3->pc2 = *midPara2;
+        n3->pc3 = tri.pc3;
 
-		//New Triangle 4
-		n4->p1 = *midReal1;
-		n4->p2 = *midReal2;
-		n4->p3 = *midReal3;
+        //New Triangle 4
+        n4->p1 = *midReal1;
+        n4->p2 = *midReal2;
+        n4->p3 = *midReal3;
 
-		n4->pc1 = *midPara1;
-		n4->pc2 = *midPara2;
-		n4->pc3 = *midPara3;
+        n4->pc1 = *midPara1;
+        n4->pc2 = *midPara2;
+        n4->pc3 = *midPara3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
-		subdivideTriangle(*n3, patch, depth+1);
-		subdivideTriangle(*n4, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n3, patch, depth+1);
+        subdivideTriangle(*n4, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
-	} else if (edge1 && edge3) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = *midReal1;
-		n1->p3 = *midReal3;
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+    } else if (edge1 && edge3) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = *midReal1;
+        n1->p3 = *midReal3;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = *midPara1;
-		n1->pc3 = *midPara3;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = *midPara1;
+        n1->pc3 = *midPara3;
 
-		//New Triangle 2
-		n2->p1 = *midReal3;
-		n2->p2 = *midReal1;
-		n2->p3 = tri.p3;
+        //New Triangle 2
+        n2->p1 = *midReal3;
+        n2->p2 = *midReal1;
+        n2->p3 = tri.p3;
 
-		n2->pc1 = *midPara3;
-		n2->pc2 = *midPara1;
-		n2->pc3 = tri.pc3;
+        n2->pc1 = *midPara3;
+        n2->pc2 = *midPara1;
+        n2->pc3 = tri.pc3;
 
-		//New Triangle 3
-		n3->p1 = *midReal1;
-		n3->p2 = tri.p2;
-		n3->p3 = tri.p3;
+        //New Triangle 3
+        n3->p1 = *midReal1;
+        n3->p2 = tri.p2;
+        n3->p3 = tri.p3;
 
-		n3->pc1 = *midPara1;
-		n3->pc2 = tri.pc2;
-		n3->pc3 = tri.pc3;
+        n3->pc1 = *midPara1;
+        n3->pc2 = tri.pc2;
+        n3->pc3 = tri.pc3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
-		subdivideTriangle(*n3, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n3, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
- 	} else if (edge2 && edge3) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = *midReal1;
-		n1->p3 = tri.p3;
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+     } else if (edge2 && edge3) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = tri.p2;
+        n1->p3 = *midReal3;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = *midPara1;
-		n1->pc3 = tri.pc3;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = tri.pc2;
+        n1->pc3 = *midPara3;
 
-		//New Triangle 2
-		n2->p1 = *midReal1;
-		n2->p2 = tri.p2;
-		n2->p3 = *midReal2;
+        //New Triangle 2
+        n2->p1 = tri.p2;
+        n2->p2 = *midReal2;
+        n2->p3 = *midReal3;
 
-		n2->pc1 = *midPara1;
-		n2->pc2 = tri.pc2;
-		n2->pc3 = *midPara2;
+        n2->pc1 = tri.pc2;
+        n2->pc2 = *midPara2;
+        n2->pc3 = *midPara3;
 
-		//New Triangle 3
-		n3->p1 = *midReal1;
-		n3->p2 = *midReal2;
-		n3->p3 = tri.p3;
+        //New Triangle 3
+        n3->p1 = *midReal3;
+        n3->p2 = *midReal2;
+        n3->p3 = tri.p3;
 
-		n3->pc1 = *midPara1;
-		n3->pc2 = *midPara2;
-		n3->pc3 = tri.pc3;
+        n3->pc1 = *midPara3;
+        n3->pc2 = *midPara2;
+        n3->pc3 = tri.pc3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
-		subdivideTriangle(*n3, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n3, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
-	} else if (edge1 && edge2) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = tri.p2;
-		n1->p3 = *midReal2;
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+    } else if (edge1 && edge2) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = *midReal1;
+        n1->p3 = *midReal2;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = tri.pc2;
-		n1->pc3 = *midPara2;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = *midPara1;
+        n1->pc3 = *midPara2;
 
-		//New Triangle 2
-		n2->p1 = *midReal3;
-		n2->p2 = *midReal2;
-		n2->p3 = tri.p3;
+        //New Triangle 2
+        n2->p1 = *midReal1;
+        n2->p2 = tri.p2;
+        n2->p3 = *midReal2;
 
-		n2->pc1 = *midPara3;
-		n2->pc2 = *midPara2;
-		n2->pc3 = tri.pc3;
+        n2->pc1 = *midPara1;
+        n2->pc2 = tri.pc2;
+        n2->pc3 = *midPara2;
 
-		//New Triangle 3
-		n3->p1 = tri.p1;
-		n3->p2 = *midReal2;
-		n3->p3 = *midReal3;
+        //New Triangle 3
+        n3->p1 = tri.p1;
+        n3->p2 = *midReal2;
+        n3->p3 = tri.p3;
 
-		n3->pc1 = tri.pc1;
-		n3->pc2 = *midPara2;
-		n3->pc3 = *midPara3;
+        n3->pc1 = tri.pc1;
+        n3->pc2 = *midPara2;
+        n3->pc3 = tri.pc3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
-		subdivideTriangle(*n3, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n3, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
 
-	} else if (edge1) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = tri.p2;
-		n1->p3 = *midReal3;
+    } else if (edge1) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = *midReal1;
+        n1->p3 = tri.p3;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = tri.pc2;
-		n1->pc3 = *midPara3;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = *midPara1;
+        n1->pc3 = tri.pc3;
 
-		//New Triangle 2
-		n2->p1 = *midReal2;
-		n2->p2 = tri.p2;
-		n2->p3 = tri.p3;
+        //New Triangle 2
+        n2->p1 = *midReal1;
+        n2->p2 = tri.p2;
+        n2->p3 = tri.p3;
 
-		n2->pc1 = *midPara2;
-		n2->pc2 = tri.p2;
-		n2->pc3 = tri.pc3;
+        n2->pc1 = *midPara1;
+        n2->pc2 = tri.pc2;
+        n2->pc3 = tri.pc3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
-	} else if (edge2) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = tri.p2;
-		n1->p3 = *midReal2;
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+    } else if (edge2) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = tri.p2;
+        n1->p3 = *midReal2;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = tri.pc2;
-		n1->pc3 = *midPara2;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = tri.pc2;
+        n1->pc3 = *midPara2;
 
-		//New Triangle 2
-		n2->p1 = tri.p1;
-		n2->p2 = *midReal2;
-		n2->p3 = tri.p3;
+        //New Triangle 2
+        n2->p1 = tri.p1;
+        n2->p2 = *midReal2;
+        n2->p3 = tri.p3;
 
-		n2->pc1 = tri.pc1;
-		n2->pc2 = *midPara2;
-		n2->pc3 = tri.pc3;
+        n2->pc1 = tri.pc1;
+        n2->pc2 = *midPara2;
+        n2->pc3 = tri.pc3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
-	} else if (edge3) {
-		//New Triangle 1
-		n1->p1 = tri.p1;
-		n1->p2 = *midReal2;
-		n1->p3 = tri.p3;
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+    } else if (edge3) {
+        //New Triangle 1
+        n1->p1 = tri.p1;
+        n1->p2 = tri.p2;
+        n1->p3 = *midReal3;
 
-		n1->pc1 = tri.pc1;
-		n1->pc2 = *midPara2;
-		n1->pc3 = tri.pc3;
+        n1->pc1 = tri.pc1;
+        n1->pc2 = tri.pc2;
+        n1->pc3 = *midPara3;
 
-		//New Triangle 2
-		n2->p1 = *midReal2;
-		n2->p2 = tri.p2;
-		n2->p3 = tri.p3;
+        //New Triangle 2
+        n2->p1 = *midReal3;
+        n2->p2 = tri.p2;
+        n2->p3 = tri.p3;
 
-		n2->pc1 = *midPara2;
-		n2->pc2 = tri.pc2;
-		n2->pc3 = tri.pc3;
+        n2->pc1 = *midPara3;
+        n2->pc2 = tri.pc2;
+        n2->pc3 = tri.pc3;
 
-		subdivideTriangle(*n1, patch, depth+1);
-		subdivideTriangle(*n2, patch, depth+1);
+        subdivideTriangle(*n1, patch, depth+1);
+        subdivideTriangle(*n2, patch, depth+1);
 
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
-	} else {
-		drawTriangle(tri.p1, tri.p2, tri.p3);
-		delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-		delete n1, n2, n3, n4;
-	}
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+    } else {
+        drawTriangle(tri.p1, tri.p2, tri.p3);
+        delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
+        delete n1, n2, n3, n4;
+    }
 }
 
 void curveTraversal(BPatch patch){
@@ -509,30 +508,16 @@ void curveTraversal(BPatch patch){
 
 	GLfloat old_u, new_u, old_v, new_v;
 
-	BCurve old_c, new_c;
-
 	old_u = 0.0;
 
-	old_c.p1 = bernstein(old_u, patch.c1);
-	old_c.p2 = bernstein(old_u, patch.c2);
-	old_c.p3 = bernstein(old_u, patch.c3);
-	old_c.p4 = bernstein(old_u, patch.c4);
-
-	for (GLfloat u = 0.0; u < 1.0; u += stepSize){
+	for (GLfloat u = 0.0; u < 1.0; u += stepSize) {
 		new_u = old_u + stepSize;
 
 		if (new_u > 1.0){
 			new_u = 1.0;
 		}
-
-		new_c.p1 = bernstein(new_u, patch.c1);
-		new_c.p2 = bernstein(new_u, patch.c2);
-		new_c.p3 = bernstein(new_u, patch.c3);
-		new_c.p4 = bernstein(new_u, patch.c4);
-
+		
 		old_v = 0.0;
-		p1 = bernstein(old_v, old_c);
-		p2 = bernstein(old_v, new_c);
 
 		for (GLfloat v = 0.0; v < 1.0; v += stepSize) {
 			new_v = old_v + stepSize;
@@ -541,62 +526,63 @@ void curveTraversal(BPatch patch){
 				new_v = 1.0;
 			}
 
-			p3 = bernstein(new_v, old_c);
-			p4 = bernstein(new_v, new_c);
+			p1 = patchPoint(old_u, old_v, patch);
+			p2 = patchPoint(new_u, old_v, patch);
+			p3 = patchPoint(old_u, new_v, patch);
+			p4 = patchPoint(new_u, new_v, patch);
 
 			drawPolygon(p1, p2, p3, p4);
 
 			old_v = new_v;
 		}
-
-		old_c = new_c;
 		old_u = new_u;
-	}
+	}	
 }
 
 void adaptiveTraversal(BPatch patch) {
-	Triangle t1, t2;
+	Triangle* t1 = new Triangle;
+	Triangle* t2 = new Triangle;
 
 	/* Triangle 1 real-world coordinates */
-	t1.p1 = patch.c1.p1;
-	t1.p2 = patch.c1.p4;
-	t1.p3 = patch.c4.p1;
+	t1->p1 = patch.c1.p1;
+	t1->p2 = patch.c1.p4;
+	t1->p3 = patch.c4.p1;
 
 	/* Parametric Coordinates for triangle 1 (represented as point with z = 0.0) */
-	t1.pc1.x = 0.0;
-	t1.pc1.y = 0.0;
-	t1.pc1.z = 0.0;
+	t1->pc1.x = 0.0;
+	t1->pc1.y = 0.0;
+	t1->pc1.z = 0.0;
 
-	t1.pc2.x = 1.0;
-	t1.pc2.y = 0.0;
-	t1.pc2.z = 0.0;
+	t1->pc2.x = 1.0;
+	t1->pc2.y = 0.0;
+	t1->pc2.z = 0.0;
 
-	t1.pc3.x = 0.0;
-	t1.pc3.y = 1.0;
-	t1.pc3.z = 0.0;
+	t1->pc3.x = 0.0;
+	t1->pc3.y = 1.0;
+	t1->pc3.z = 0.0;
 
 
 	/* Triangle 2 real-world coordinates */
-	t2.p1 = patch.c4.p1;
-	t2.p2 = patch.c1.p4;
-	t2.p3 = patch.c4.p4;
+	t2->p1 = patch.c4.p1;
+	t2->p2 = patch.c1.p4;
+	t2->p3 = patch.c4.p4;
 
 	/* Parametric Coordinates for triangle 2 (represented as point with z = 0.0) */
-	t2.pc1.x = 0.0;
-	t2.pc1.y = 1.0;
-	t2.pc1.z = 0.0;
+	t2->pc1.x = 0.0;
+	t2->pc1.y = 1.0;
+	t2->pc1.z = 0.0;
 
-	t2.pc2.x = 1.0;
-	t2.pc2.y = 0.0;
-	t2.pc2.z = 0.0;
+	t2->pc2.x = 1.0;
+	t2->pc2.y = 0.0;
+	t2->pc2.z = 0.0;
 
-	t2.pc3.x = 1.0;
-	t2.pc3.y = 1.0;
-	t2.pc3.z = 0.0;
+	t2->pc3.x = 1.0;
+	t2->pc3.y = 1.0;
+	t2->pc3.z = 0.0;
 	
-	subdivideTriangle(t1, patch, 0);
-	subdivideTriangle(t2, patch, 0);
-	
+	subdivideTriangle(*t1, patch, 0);
+	subdivideTriangle(*t2, patch, 0);
+	delete t1, t2;
 }
 
 void uniformTesselation(){
