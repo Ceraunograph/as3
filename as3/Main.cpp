@@ -93,9 +93,9 @@ GLfloat minY = -1.0;
 //Light Source Information
 //Light Zero
 GLfloat diffuse0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat ambient0[]={1.0, 1.0, 1.0, 1.0};
+GLfloat ambient0[]={0.5, 0.0, 0.0, 1.0};
 GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat light0_pos[]={1.0, 0.0, 3,0, 1.0};
+GLfloat light0_pos[]={3.0, 3.0, 0.0, 1.0};
 
 //****************************************************
 // reshape viewport if the window is resized
@@ -118,7 +118,7 @@ void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
 	myReshape(viewport.w,viewport.h);
 
-	//glEnable(GL_NORMALIZE);
+	glEnable(GL_NORMALIZE);
 
 	//Enable Light Source Number Zero
 	glEnable(GL_LIGHTING);
@@ -127,6 +127,8 @@ void initScene(){
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
+
+	glEnable(GL_DEPTH_TEST);
 }
 
 //*********************************************
@@ -159,7 +161,7 @@ Point subtractPoint(Point p1, Point p2){
 
 Point normalize(Point p){
 	Point r;
-	GLfloat len = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+	GLfloat len = sqrt(pow(p.x, 2.0) + pow(p.y, 2.0) + pow(p.z, 2.0));
 	r.x = p.x / len;
 	r.y = p.y / len;
 	r.z = p.z / len;
@@ -175,7 +177,7 @@ Point crossProduct(Point p1, Point p2){
 }
 
 Point getNormal(Point p1, Point p2, Point p3){
-	return normalize(crossProduct(normalize(subtractPoint(p3, p1)), normalize(subtractPoint(p2, p1))));
+	return crossProduct(subtractPoint(p2, p1), subtractPoint(p3, p1));
 }
 
 Point midPoint(Point p1, Point p2) {
@@ -218,19 +220,25 @@ void drawPolygon(Point p1, Point p2, Point p3, Point p4){
 	Point n;
 	n = getNormal(p1, p2, p3);
 	glBegin(GL_POLYGON);
-	//glNormal3f(n.x, n.y, n.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p1.x, p1.y, p1.z);
+
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p2.x, p2.y, p2.z);
+
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p4.x, p4.y, p4.z);
+
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p3.x, p3.y, p3.z);
 	glEnd();
 }
 
 void drawTriangle(Point p1, Point p2, Point p3){
 	Point n;
-	n = getNormal(p3, p1, p2);
+	n = getNormal(p1, p2, p3);
 	glBegin(GL_POLYGON);
-	//glNormal3f(n.x, n.y, n.z);
+	glNormal3f(n.x, n.y, n.z);
 	glVertex3f(p1.x, p1.y, p1.z);
 	glVertex3f(p2.x, p2.y, p2.z);
 	glVertex3f(p3.x, p3.y, p3.z);
@@ -488,8 +496,23 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 	} else {
 		drawTriangle(tri.p1, tri.p2, tri.p3);
 	}
-	delete midPoint1, midPoint2, midPoint3, midPara1, midPara2, midPara3, midReal1, midReal2, midReal3;
-	delete n1, n2, n3, n4;
+
+	delete midPoint1;
+	delete midPoint2;
+	delete midPoint3;
+
+	delete midPara1;
+	delete midPara2;
+	delete midPara3;
+
+	delete midReal1;
+	delete midReal2;
+	delete midReal3;
+
+	delete n1;
+	delete n2;
+	delete n3;
+	delete n4;
 }
 
 void curveTraversal(BPatch patch){
