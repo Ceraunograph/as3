@@ -342,13 +342,134 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 
  	} else if (edge2 && edge3) {
 		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = midReal1;
+		n1->p3 = tri.p3;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = midPara1;
+		n1->pc3 = tri.pc3;
+
+		//New Triangle 2
+		n2->p1 = midReal1;
+		n2->p2 = tri.p2;
+		n2->p3 = midReal2;
+
+		n2->pc1 = midPara1;
+		n2->pc2 = tri.pc2;
+		n2->pc3 = midPara2;
+
+		//New Triangle 3
+		n3->p1 = midReal1;
+		n3->p2 = midReal2;
+		n3->p3 = tri.p3;
+
+		n3->pc1 = midPara1;
+		n3->pc2 = midPara2;
+		n3->pc3 = tri.pc3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
+		subdivideTriangle(*n3, patch, depth+1);
+
 	} else if (edge1 && edge2) {
+		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = tri.p2;
+		n1->p3 = midReal2;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = tri.pc2;
+		n1->pc3 = midPara2;
+
+		//New Triangle 2
+		n2->p1 = midReal3;
+		n2->p2 = midReal2;
+		n2->p3 = tri.p3;
+
+		n2->pc1 = midPara3;
+		n2->pc2 = midPara2;
+		n2->pc3 = tri.pc3;
+
+		//New Triangle 3
+		n3->p1 = tri.p1;
+		n3->p2 = midReal2;
+		n3->p3 = midReal3;
+
+		n3->pc1 = tri.pc1;
+		n3->pc2 = midPara2;
+		n3->pc3 = midPara3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
+		subdivideTriangle(*n3, patch, depth+1);
+
 
 	} else if (edge1) {
+		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = tri.p2;
+		n1->p3 = midReal3;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = tri.pc2;
+		n1->pc3 = midPara3;
+
+		//New Triangle 2
+		n2->p1 = midReal2;
+		n2->p2 = tri.p2;
+		n2->p3 = tri.p3;
+
+		n2->pc1 = midPara2;
+		n2->pc2 = tri.p2;
+		n2->pc3 = tri.pc3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
 
 	} else if (edge2) {
+		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = tri.p2;
+		n1->p3 = midReal2;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = tri.pc2;
+		n1->pc3 = midPara2;
+
+		//New Triangle 2
+		n2->p1 = tri.p1;
+		n2->p2 = midReal2;
+		n2->p3 = tri.p3;
+
+		n2->pc1 = tri.pc1;
+		n2->pc2 = midPara2;
+		n2->pc3 = tri.pc3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
 
 	} else if (edge3) {
+		//New Triangle 1
+		n1->p1 = tri.p1;
+		n1->p2 = midReal2;
+		n1->p3 = tri.p3;
+
+		n1->pc1 = tri.pc1;
+		n1->pc2 = midPara2;
+		n1->pc3 = tri.pc3;
+
+		//New Triangle 2
+		n2->p1 = midReal2;
+		n2->p2 = tri.p2;
+		n2->p3 = tri.p3;
+
+		n2->pc1 = midPara2;
+		n2->pc2 = tri.pc2;
+		n2->pc3 = tri.pc3;
+
+		subdivideTriangle(*n1, patch, depth+1);
+		subdivideTriangle(*n2, patch, depth+1);
 		
 	} else {
 		drawTriangle(tri.p1, tri.p2, tri.p3);
