@@ -127,18 +127,7 @@ void initScene(){
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
-
-
-	
-	glDepthRange(0,1);
-	glClearDepth(1.0f);   
-	glDepthFunc(GL_LEQUAL); 
-	glEnable (GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	
-
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);	
 }
 
 //*********************************************w
@@ -255,7 +244,7 @@ void drawTriangle(Point p1, Point p2, Point p3){
 }
 
 void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
-	Triangle* n1 = new Triangle;
+	Triangle* n1 = new Triangle; 
 	Triangle* n2 = new Triangle;
 	Triangle* n3 = new Triangle;
 	Triangle* n4 = new Triangle;
@@ -525,36 +514,25 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 }
 
 void curveTraversal(BPatch patch){
-
 	Point p1, p2, p3, p4;
-
 	GLfloat old_u, new_u, old_v, new_v;
-
 	old_u = 0.0;
-
 	for (GLfloat u = 0.0; u < 1.0; u += stepSize) {
 		new_u = old_u + stepSize;
-
 		if (new_u > 1.0){
 			new_u = 1.0;
 		}
-
 		old_v = 0.0;
-
 		for (GLfloat v = 0.0; v < 1.0; v += stepSize) {
 			new_v = old_v + stepSize;
-
 			if (new_v > 1.0){
 				new_v = 1.0;
 			}
-
 			p1 = patchPoint(old_u, old_v, patch);
 			p2 = patchPoint(new_u, old_v, patch);
 			p3 = patchPoint(old_u, new_v, patch);
 			p4 = patchPoint(new_u, new_v, patch);
-
 			drawPolygon(p1, p2, p3, p4);
-
 			old_v = new_v;
 		}
 		old_u = new_u;
