@@ -30,7 +30,6 @@ static struct timeval lastTime;
 #include <string.h>
 #include <stdlib.h>
 
-
 #define PI 3.14159265  // Should be used from mathlib
 inline float sqr(float x) { return x*x; }
 
