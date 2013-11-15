@@ -92,6 +92,9 @@ GLfloat xTran = 0.0;
 GLfloat yTran = 0.0;
 
 GLfloat scaleValue = 1.0;
+GLfloat maxX = 10;
+GLfloat maxY = 10;
+
 
 //****************************************************
 // reshape viewport if the window is resized
@@ -104,7 +107,7 @@ void myReshape(int w, int h) {
 	glMatrixMode(GL_PROJECTION);
 
 	glLoadIdentity();
-	glOrtho(-10, 10, -10, 10, -100, 100);
+	glOrtho(-maxX, maxX, -maxY, maxY, -100, 100);
 	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
 }
 
@@ -877,6 +880,7 @@ void loadScene(std::string file) {
 		}
 		inpfile.close();
 	}
+	maxX = maxY = maxBoundaries;
 }
 
 
