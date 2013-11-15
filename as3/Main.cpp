@@ -100,7 +100,7 @@ GLfloat minY = -1.0;
 //Light Source Information
 //Light Zero
 GLfloat diffuse0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat ambient0[]={0.5, 0.0, 0.0, 1.0};
+GLfloat ambient0[]={0.2, 0.0, 0.0, 1.0};
 GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
 GLfloat light0_pos[]={3.0, 3.0, 0,0, 1.0};
 
@@ -126,22 +126,24 @@ void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
 	myReshape(viewport.w,viewport.h);
 
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 
 	//Enable Light Source Number Zero
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient0);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse0);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, specular0);
 
-
+	glClearDepth(1.f);
+    	glClearColor(0.f, 0.f, 0.f, 0.f);
+	glDepthMask(GL_TRUE);
 	
 	glDepthRange(0,1);
 	glClearDepth(1.0f);   
 	glDepthFunc(GL_LEQUAL); 
-	glEnable (GL_DEPTH_TEST);
+	//glEnable (GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	
@@ -249,7 +251,7 @@ Tuple patchPoint(GLfloat u, GLfloat v, BPatch patch) {
 	dPdv = temp1.p2;
 	dPdu = temp2.p2;
 
-	n = normalize(crossProduct(dPdu, dPdv));
+	n = crossProduct(dPdu, dPdv);
 	Tuple output;
 	output.p1 = p;
 	output.p2 = n;
@@ -702,6 +704,10 @@ void adaptiveTraversal(BPatch patch) {
 	t1->pc3.y = 1.0;
 	t1->pc3.z = 0.0;
 
+	t1->n1 = patchPoint(t1->pc1.x, t1->pc1.y, patch).p2;
+	t1->n2 = patchPoint(t1->pc2.x, t1->pc2.y, patch).p2;
+	t1->n3 = patchPoint(t1->pc3.x, t1->pc3.y, patch).p2;
+
 
 	/* Triangle 2 real-world coordinates */
 	t2->p1 = patch.c4.p1;
@@ -720,6 +726,10 @@ void adaptiveTraversal(BPatch patch) {
 	t2->pc3.x = 1.0;
 	t2->pc3.y = 1.0;
 	t2->pc3.z = 0.0;
+
+	t2->n1 = patchPoint(t2->pc1.x, t2->pc1.y, patch).p2;
+	t2->n2 = patchPoint(t2->pc2.x, t2->pc2.y, patch).p2;
+	t2->n3 = patchPoint(t2->pc3.x, t2->pc3.y, patch).p2;
 
 	subdivideTriangle(*t1, patch, 0);
 	subdivideTriangle(*t2, patch, 0);
