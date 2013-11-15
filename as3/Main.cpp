@@ -203,15 +203,15 @@ Point* bernstein(GLfloat u, BCurve curve){
 
 	p = addPoint(multiplyPoint((1.0-u), d), multiplyPoint(u, e));
 	pd = multiplyPoint(3.0, subtractPoint(e, d));
-	
+
 	Point output[2] = {p, pd};
+
 	return output;
 }
 
 Point* patchPoint(GLfloat u, GLfloat v, BPatch patch) {
 	BCurve vcurve, ucurve;
 	Point p, dPdv, dPdu, n;
-	
 
 	vcurve.p1 = bernstein(u, patch.c1)[0];
 	vcurve.p2 = bernstein(u, patch.c2)[0];
