@@ -96,10 +96,6 @@ GLfloat minX = -1.0;
 GLfloat maxY = 1.0;
 GLfloat minY = -1.0;
 
-//Light Source Information
-//Light Zero
-
-
 
 //****************************************************
 // reshape viewport if the window is resized
@@ -118,25 +114,26 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 
-GLfloat diffuse0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat ambient0[]={0.5, 0.0, 0.0, 1.0};
-GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat light0_pos[]={3.0, 3.0, 0,0, 1.0};
+GLfloat diffuse0[]={0.3, 0.3, 0.3, 1.0};
+GLfloat ambient0[]={0.2, 0.2, 0.2, 1.0};
+GLfloat specular0[]={1.0, 0.0, 0.0, 1.0};
+GLfloat light0_pos[]={1.0, 0.0, 1.0, 1.0};
+GLfloat shininess[] = {1.0};
 
 void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
 	myReshape(viewport.w,viewport.h);
 
 	glEnable(GL_NORMALIZE);
-
+	glEnable(GL_DEPTH_TEST);
 	//Enable Light Source Number Zero
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient0);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse0);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, specular0);
+	glLightfv(GL_FRONT, GL_AMBIENT, ambient0);
+	glLightfv(GL_FRONT, GL_DIFFUSE, diffuse0);
+	glLightfv(GL_FRONT, GL_SPECULAR, specular0);
+	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	//glEnable(GL_DEPTH_TEST);
 }
 
 //*********************************************w
@@ -223,15 +220,37 @@ Tuple patchPoint(GLfloat u, GLfloat v, BPatch patch) {
 	BCurve vcurve, ucurve;
 	Point p, dPdv, dPdu, n;
 
+	BCurve hc1, hc2, hc3, hc4;
+
+	hc1.p1 = patch.c1.p1;
+	hc1.p2 = patch.c2.p1;
+	hc1.p3 = patch.c3.p1;
+	hc1.p4 = patch.c4.p1;
+
+	hc2.p1 = patch.c1.p2;
+	hc2.p2 = patch.c2.p2;
+	hc2.p3 = patch.c3.p2;
+	hc2.p4 = patch.c4.p2;
+
+	hc3.p1 = patch.c1.p3;
+	hc3.p2 = patch.c2.p3;
+	hc3.p3 = patch.c3.p3;
+	hc3.p4 = patch.c4.p3;
+
+	hc4.p1 = patch.c1.p4;
+	hc4.p2 = patch.c2.p4;
+	hc4.p3 = patch.c3.p4;
+	hc4.p4 = patch.c4.p4;
+
 	vcurve.p1 = bernstein(u, patch.c1).p1;
 	vcurve.p2 = bernstein(u, patch.c2).p1;
 	vcurve.p3 = bernstein(u, patch.c3).p1;
 	vcurve.p4 = bernstein(u, patch.c4).p1;
 
-	ucurve.p1 = bernstein(v, patch.c1).p1;
-	ucurve.p2 = bernstein(v, patch.c2).p1;
-	ucurve.p3 = bernstein(v, patch.c3).p1;
-	ucurve.p4 = bernstein(v, patch.c4).p1;
+	ucurve.p1 = bernstein(v, hc1).p1;
+	ucurve.p2 = bernstein(v, hc2).p1;
+	ucurve.p3 = bernstein(v, hc3).p1;
+	ucurve.p4 = bernstein(v, hc4).p1;
 
 	Tuple temp1 = bernstein(v, vcurve);
 	Tuple temp2 = bernstein(u, ucurve);
@@ -250,10 +269,13 @@ void drawPolygon(Tuple t1, Tuple t2, Tuple t3, Tuple t4){
 	glBegin(GL_POLYGON);
 	glNormal3f(t1.p2.x, t1.p2.y, t1.p2.z);
 	glVertex3f(t1.p1.x, t1.p1.y, t1.p1.z);
+
 	glNormal3f(t2.p2.x, t2.p2.y, t2.p2.z);
 	glVertex3f(t2.p1.x, t2.p1.y, t2.p1.z);
+
 	glNormal3f(t4.p2.x, t4.p2.y, t4.p2.z);
 	glVertex3f(t4.p1.x, t4.p1.y, t4.p1.z);
+
 	glNormal3f(t3.p2.x, t3.p2.y, t3.p2.z);
 	glVertex3f(t3.p1.x, t3.p1.y, t3.p1.z);
 	glEnd();
@@ -263,14 +285,16 @@ void drawTriangle(Triangle tri){
 	glBegin(GL_POLYGON);
 	glNormal3f(tri.n1.x, tri.n1.y, tri.n1.z);
 	glVertex3f(tri.p1.x, tri.p1.y, tri.p1.z);
+
 	glNormal3f(tri.n2.x, tri.n2.y, tri.n2.z);
 	glVertex3f(tri.p2.x, tri.p2.y, tri.p2.z);
+
 	glNormal3f(tri.n3.x, tri.n3.y, tri.n3.z);
 	glVertex3f(tri.p3.x, tri.p3.y, tri.p3.z);
 	glEnd();
 }
 
-void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
+void subdivideTriangle(Triangle tri, BPatch patch) {
 	Triangle* t1 = new Triangle;
 	Triangle* t2 = new Triangle;
 	Triangle* t3 = new Triangle;
@@ -379,10 +403,10 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t4->n2 = *midNorm2;
 		t4->n3 = *midNorm3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
-		subdivideTriangle(*t3, patch, depth+1);
-		subdivideTriangle(*t4, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
+		subdivideTriangle(*t3, patch);
+		subdivideTriangle(*t4, patch);
 
 	} else if (edge1 && edge3) {
 		//New Triangle 1
@@ -409,7 +433,7 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 
 		t2->n1 = *midNorm3;
 		t2->n2 = *midNorm1;
-		t2->n3 = tri.n1;
+		t2->n3 = tri.n3;
 
 		//New Triangle 3
 		t3->p1 = *midReal1;
@@ -424,9 +448,9 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t3->n2 = tri.n2;
 		t3->n3 = tri.n3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
-		subdivideTriangle(*t3, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
+		subdivideTriangle(*t3, patch);
 
 	} else if (edge2 && edge3) {
 		//New Triangle 1
@@ -468,9 +492,9 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t3->n2 = *midNorm2;
 		t3->n3 = tri.n3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
-		subdivideTriangle(*t3, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
+		subdivideTriangle(*t3, patch);
 
 	} else if (edge1 && edge2) {
 		//New Triangle 1
@@ -512,9 +536,9 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t3->n2 = *midNorm2;
 		t3->n3 = tri.n3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
-		subdivideTriangle(*t3, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
+		subdivideTriangle(*t3, patch);
 
 	} else if (edge1) {
 		//New Triangle 1
@@ -543,8 +567,8 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t2->n2 = tri.n2;
 		t2->n3 = tri.n3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
 
 	} else if (edge2) {
 		//New Triangle 1
@@ -573,8 +597,8 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t2->n2 = *midNorm2;
 		t2->n3 = tri.n3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
 
 	} else if (edge3) {
 		//New Triangle 1
@@ -603,8 +627,8 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		t2->n2 = tri.n2;
 		t2->n3 = tri.n3;
 
-		subdivideTriangle(*t1, patch, depth+1);
-		subdivideTriangle(*t2, patch, depth+1);
+		subdivideTriangle(*t1, patch);
+		subdivideTriangle(*t2, patch);
 
 	} else {
 		drawTriangle(tri);
@@ -682,6 +706,10 @@ void adaptiveTraversal(BPatch patch) {
 	t1->pc3.y = 1.0;
 	t1->pc3.z = 0.0;
 
+	t1->n1 = patchPoint(t1->pc1.x, t1->pc1.y, patch).p2;
+	t1->n2 = patchPoint(t1->pc2.x, t1->pc2.y, patch).p2;
+	t1->n3 = patchPoint(t1->pc3.x, t1->pc3.y, patch).p2;
+
 
 	/* Triangle 2 real-world coordinates */
 	t2->p1 = patch.c4.p1;
@@ -701,8 +729,12 @@ void adaptiveTraversal(BPatch patch) {
 	t2->pc3.y = 1.0;
 	t2->pc3.z = 0.0;
 
-	subdivideTriangle(*t1, patch, 0);
-	subdivideTriangle(*t2, patch, 0);
+	t2->n1 = patchPoint(t2->pc1.x, t2->pc1.y, patch).p2;
+	t2->n2 = patchPoint(t2->pc2.x, t2->pc2.y, patch).p2;
+	t2->n3 = patchPoint(t2->pc3.x, t2->pc3.y, patch).p2;
+
+	subdivideTriangle(*t1, patch);
+	subdivideTriangle(*t2, patch);
 	delete t1, t2;
 }
 
@@ -856,7 +888,7 @@ void loadScene(std::string file) {
 // function that does the actual drawing of stuff
 //***************************************************
 void myDisplay() {
-	glClear(GL_COLOR_BUFFER_BIT);				// clear the color buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				// clear the color buffer
 	glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
 
 	glLoadIdentity();				        // make sure transformation is "zero'd"
@@ -885,7 +917,7 @@ void keyboard(unsigned char key, int x, int y) {
 	case 32: // Space key
 		exit (0);
 		break;
-	case 43: //+ key
+	case 61: //+ key
 		maxX -= 0.2;
 		minX += 0.2;
 		maxY -= 0.2;
@@ -899,11 +931,9 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 115: //s key
 		if (smooth){
-			//glEnable(GL_FLAT);
 			glShadeModel(GL_FLAT);
 			smooth = false;
 		}else{
-			//glEnable(GL_SMOOTH);
 			glShadeModel(GL_SMOOTH);
 			smooth = true;
 		}
@@ -926,28 +956,28 @@ void SpecialKeys(int key, int x, int y)
 	{
 	case GLUT_KEY_LEFT:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			xRot += 10;
+			yRot += 10;
 		} else {
 			xTran -= 0.1;
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			xRot -= 10;
+			yRot -= 10;
 		} else {
 			xTran += 0.1;
 		}
 		break;
 	case GLUT_KEY_UP:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			yRot -= 10;
+			xRot -= 10;
 		} else {
 			yTran += 0.1;
 		}
 		break;
 	case GLUT_KEY_DOWN:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
-			yRot += 10;
+			xRot += 10;
 		} else {
 			yTran -= 0.1;
 		}
