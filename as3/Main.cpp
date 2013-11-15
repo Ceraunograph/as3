@@ -114,11 +114,13 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 
-GLfloat diffuse0[]={0.3, 0.3, 0.3, 1.0};
-GLfloat ambient0[]={0.2, 0.2, 0.2, 1.0};
-GLfloat specular0[]={1.0, 0.0, 0.0, 1.0};
-GLfloat light0_pos[]={1.0, 0.0, 1.0, 1.0};
-GLfloat shininess[] = {1.0};
+GLfloat diffuseM[]={0.3, 0.8, 0.3, 1.0};
+GLfloat ambientM[]={0.2, 0.2, 0.2, 1.0};
+GLfloat specularM[]={1.0, 1.0, 1.0, 1.0};
+GLfloat shininessM[] = {100.0};
+
+GLfloat light0_pos[]={0.0, 0.0, 10.0, 1.0};
+GLfloat light0_color[]={0.8, 0.8, 0.8, 1.0};
 
 void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
@@ -126,12 +128,18 @@ void initScene(){
 
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_DEPTH_TEST);
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientM);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseM);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularM);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininessM);
+
 	//Enable Light Source Number Zero
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
-	glLightfv(GL_FRONT, GL_AMBIENT, ambient0);
-	glLightfv(GL_FRONT, GL_DIFFUSE, diffuse0);
-	glLightfv(GL_FRONT, GL_SPECULAR, specular0);
-	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, light0_color);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_color);
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, light0_color);
+
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 }
@@ -888,12 +896,13 @@ void loadScene(std::string file) {
 // function that does the actual drawing of stuff
 //***************************************************
 void myDisplay() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				// clear the color buffer
-	glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// clear the color buffer
 
-	glLoadIdentity();				        // make sure transformation is "zero'd"
+	glMatrixMode(GL_PROJECTION);
+	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
 
-	glOrtho(minX, maxX, minY, maxY, -100, 100);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	glRotatef(xRot, 1.0, 0.0, 0.0);
 	glRotatef(yRot, 0.0, 1.0, 0.0);
