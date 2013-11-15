@@ -65,6 +65,11 @@ public:
 	Point p1, p2, p3, pc1, pc2, pc3, n1, n2, n3;
 };
 
+class Tuple{
+public:
+	Point p1, p2;
+};
+
 
 
 //****************************************************
@@ -204,7 +209,7 @@ GLfloat distancePoint(Point p1, Point p2) {
 	return sqrt(pow(p1.x-p2.x, 2.0)+pow(p1.y-p2.y, 2.0) + pow(p1.z-p2.z, 2.0));
 }
 
-Point* bernstein(GLfloat u, BCurve curve){
+Tuple bernstein(GLfloat u, BCurve curve){
 	Point a, b, c, d, e, p, pd;
 
 	a = addPoint(multiplyPoint((1.0-u), curve.p1), multiplyPoint(u, curve.p2));
@@ -217,62 +222,62 @@ Point* bernstein(GLfloat u, BCurve curve){
 	p = addPoint(multiplyPoint((1.0-u), d), multiplyPoint(u, e));
 	pd = multiplyPoint(3.0, subtractPoint(e, d));
 	
-	Point output[2] = {p, pd};
+	Tuple output;
+	output.p1 = p;
+	output.p2 = pd;
 	return output;
 }
 
-Point* patchPoint(GLfloat u, GLfloat v, BPatch patch) {
+Tuple patchPoint(GLfloat u, GLfloat v, BPatch patch) {
 	BCurve vcurve, ucurve;
 	Point p, dPdv, dPdu, n;
 	
 
-	vcurve.p1 = bernstein(u, patch.c1)[0];
-	vcurve.p2 = bernstein(u, patch.c2)[0];
-	vcurve.p3 = bernstein(u, patch.c3)[0];
-	vcurve.p4 = bernstein(u, patch.c4)[0];
+	vcurve.p1 = bernstein(u, patch.c1).p1;
+	vcurve.p2 = bernstein(u, patch.c2).p1;
+	vcurve.p3 = bernstein(u, patch.c3).p1;
+	vcurve.p4 = bernstein(u, patch.c4).p1;
 
-	ucurve.p1 = bernstein(v, patch.c1)[0];
-	ucurve.p2 = bernstein(v, patch.c2)[0];
-	ucurve.p3 = bernstein(v, patch.c3)[0];
-	ucurve.p4 = bernstein(v, patch.c4)[0];
+	ucurve.p1 = bernstein(v, patch.c1).p1;
+	ucurve.p2 = bernstein(v, patch.c2).p1;
+	ucurve.p3 = bernstein(v, patch.c3).p1;
+	ucurve.p4 = bernstein(v, patch.c4).p1;
 
-	Point* temp1 = bernstein(v, vcurve);
-	Point* temp2 = bernstein(u, ucurve);
-	p = temp1[0];
-	dPdv = temp1[1];
-	dPdu = temp2[1];
+	Tuple temp1 = bernstein(v, vcurve);
+	Tuple temp2 = bernstein(u, ucurve);
+	p = temp1.p1;
+	dPdv = temp1.p2;
+	dPdu = temp2.p2;
 
 	n = normalize(crossProduct(dPdu, dPdv));
-	Point output[2] = {p, n};
+	Tuple output;
+	output.p1 = p;
+	output.p2 = n;
 	return output;
 		
 }
 
-void drawPolygon(Point p1, Point p2, Point p3, Point p4){
-	Point n;
-	n = getNormal(p1, p2, p3);
+void drawPolygon(Tuple t1, Tuple t2, Tuple t3, Tuple t4){
 	glBegin(GL_POLYGON);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p1.x, p1.y, p1.z);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p2.x, p2.y, p2.z);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p4.x, p4.y, p4.z);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p3.x, p3.y, p3.z);
+	glNormal3f(t1.p2.x, t1.p2.y, t1.p2.z);
+	glVertex3f(t1.p1.x, t1.p1.y, t1.p1.z);
+	glNormal3f(t2.p2.x, t2.p2.y, t2.p2.z);
+	glVertex3f(t2.p1.x, t2.p1.y, t2.p1.z);
+	glNormal3f(t4.p2.x, t4.p2.y, t4.p2.z);
+	glVertex3f(t4.p1.x, t4.p1.y, t4.p1.z);
+	glNormal3f(t3.p2.x, t3.p2.y, t3.p2.z);
+	glVertex3f(t3.p1.x, t3.p1.y, t3.p1.z);
 	glEnd();
 }
 
-void drawTriangle(Point p1, Point p2, Point p3){
-	Point n;
-	n = getNormal(p1, p2, p3);
+void drawTriangle(Triangle tri){
 	glBegin(GL_POLYGON);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p1.x, p1.y, p1.z);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p2.x, p2.y, p2.z);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p3.x, p3.y, p3.z);
+	glNormal3f(tri.n1.x, tri.n1.y, tri.n1.z);
+	glVertex3f(tri.p1.x, tri.p1.y, tri.p1.z);
+	glNormal3f(tri.n2.x, tri.n2.y, tri.n2.z);
+	glVertex3f(tri.p2.x, tri.p2.y, tri.p2.z);
+	glNormal3f(tri.n3.x, tri.n3.y, tri.n3.z);
+	glVertex3f(tri.p3.x, tri.p3.y, tri.p3.z);
 	glEnd();
 }
 
@@ -310,17 +315,17 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 	*midPara2 = midPoint(tri.pc2, tri.pc3);
 	*midPara3 = midPoint(tri.pc1, tri.pc3);
 
-	Point* temp1 = patchPoint(midPara1->x, midPara1->y, patch);
-	Point* temp2 = patchPoint(midPara2->x, midPara2->y, patch);
-	Point* temp3 = patchPoint(midPara3->x, midPara3->y, patch);
+	Tuple temp1 = patchPoint(midPara1->x, midPara1->y, patch);
+	Tuple temp2 = patchPoint(midPara2->x, midPara2->y, patch);
+	Tuple temp3 = patchPoint(midPara3->x, midPara3->y, patch);
 
-	*midReal1 = temp1[0];
-	*midReal2 = temp2[0];
-	*midReal3 = temp3[0];
+	*midReal1 = temp1.p1;
+	*midReal2 = temp2.p1;
+	*midReal3 = temp3.p1;
 
-	*midNorm1 = temp1[1];	
-	*midNorm2 = temp2[1];
-	*midNorm3 = temp3[1];
+	*midNorm1 = temp1.p2;	
+	*midNorm2 = temp2.p2;
+	*midNorm3 = temp3.p2;
 
 	if (distancePoint(*midReal1, *midPoint1) > stepSize) {
 		edge1 = true;
@@ -613,7 +618,7 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 		subdivideTriangle(*t2, patch, depth+1);
 
 	} else {
-		drawTriangle(tri.p1, tri.p2, tri.p3);
+		drawTriangle(tri);
 	}
 
 	delete midPoint1;
@@ -640,7 +645,7 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 
 void curveTraversal(BPatch patch){
 
-	Point p1, p2, p3, p4;
+	Tuple t1, t2, t3, t4;
 
 	GLfloat old_u, new_u, old_v, new_v;
 
@@ -662,12 +667,12 @@ void curveTraversal(BPatch patch){
 				new_v = 1.0;
 			}
 
-			p1 = patchPoint(old_u, old_v, patch)[0];
-			p2 = patchPoint(new_u, old_v, patch)[0];
-			p3 = patchPoint(old_u, new_v, patch)[0];
-			p4 = patchPoint(new_u, new_v, patch)[0];
+			t1 = patchPoint(old_u, old_v, patch);
+			t2 = patchPoint(new_u, old_v, patch);
+			t3 = patchPoint(old_u, new_v, patch);
+			t4 = patchPoint(new_u, new_v, patch);
 
-			drawPolygon(p1, p2, p3, p4);
+			drawPolygon(t1, t2, t3, t4);
 
 			old_v = new_v;
 		}
