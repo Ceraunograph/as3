@@ -91,11 +91,7 @@ GLfloat xRot = 0.0;
 GLfloat xTran = 0.0;
 GLfloat yTran = 0.0;
 
-GLfloat maxX = 1.0;
-GLfloat minX = -1.0;
-GLfloat maxY = 1.0;
-GLfloat minY = -1.0;
-
+GLfloat scaleValue = 1.0;
 
 //****************************************************
 // reshape viewport if the window is resized
@@ -106,21 +102,22 @@ void myReshape(int w, int h) {
 
 	glViewport (0,0,viewport.w,viewport.h);
 	glMatrixMode(GL_PROJECTION);
+
 	glLoadIdentity();
-	glOrtho(minX, maxX, minY, maxY, -100, 100);
+	glOrtho(-10, 10, -10, 10, -100, 100);
+	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
 }
 
 //****************************************************
 // Simple init function
 //****************************************************
 
-GLfloat diffuseM[]={0.3, 0.8, 0.3, 1.0};
+GLfloat diffuseM[]={0.3, 0.3, 0.8, 1.0};
 GLfloat ambientM[]={0.2, 0.2, 0.2, 1.0};
 GLfloat specularM[]={1.0, 1.0, 1.0, 1.0};
 GLfloat shininessM[] = {100.0};
 
 GLfloat light0_pos[]={0.0, 0.0, 10.0, 1.0};
-GLfloat light0_color[]={0.8, 0.8, 0.8, 1.0};
 
 void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
@@ -136,9 +133,6 @@ void initScene(){
 
 	//Enable Light Source Number Zero
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, light0_color);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_color);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, light0_color);
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -881,12 +875,6 @@ void loadScene(std::string file) {
 				}
 			}
 		}
-
-		maxX = maxBoundaries;
-		minX = -maxBoundaries;
-		maxY = maxBoundaries;
-		minY = -maxBoundaries;
-
 		inpfile.close();
 	}
 }
@@ -898,17 +886,16 @@ void loadScene(std::string file) {
 void myDisplay() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// clear the color buffer
 
-	glMatrixMode(GL_PROJECTION);
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glRotatef(xRot, 1.0, 0.0, 0.0);
-	glRotatef(yRot, 0.0, 1.0, 0.0);
+	glScalef(scaleValue, scaleValue, scaleValue);
 
 	glTranslatef(xTran, 0.0, 0.0);
 	glTranslatef(0.0, yTran, 0.0);
+
+	glRotatef(xRot, 1.0, 0.0, 0.0);
+	glRotatef(yRot, 0.0, 1.0, 0.0);
 
 	if (adaptive) {
 		adaptiveTriangulation();
@@ -927,16 +914,10 @@ void keyboard(unsigned char key, int x, int y) {
 		exit (0);
 		break;
 	case 61: //+ key
-		maxX -= 0.2;
-		minX += 0.2;
-		maxY -= 0.2;
-		minY += 0.2;
+		scaleValue += 0.1;
 		break;
 	case 45: // - key
-		maxX += 0.2;
-		minX -= 0.2;
-		maxY += 0.2;
-		minY -= 0.2;
+		scaleValue -= 0.1;
 		break;
 	case 115: //s key
 		if (smooth){
@@ -967,28 +948,28 @@ void SpecialKeys(int key, int x, int y)
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
 			yRot += 10;
 		} else {
-			xTran -= 0.1;
+			xTran -= 0.5;
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
 			yRot -= 10;
 		} else {
-			xTran += 0.1;
+			xTran += 0.5;
 		}
 		break;
 	case GLUT_KEY_UP:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
 			xRot -= 10;
 		} else {
-			yTran += 0.1;
+			yTran += 0.5;
 		}
 		break;
 	case GLUT_KEY_DOWN:
 		if (!(glutGetModifiers() & GLUT_ACTIVE_SHIFT)) {
 			xRot += 10;
 		} else {
-			yTran -= 0.1;
+			yTran -= 0.5;
 		}
 		break;
 	}
