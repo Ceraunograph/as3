@@ -84,7 +84,7 @@ bool adaptive = false;
 
 // Wired Mode or Filled Mode
 bool wired = false;
-bool smooth = false;
+bool smooth = true;
 
 GLfloat yRot = 0.0;
 GLfloat xRot = 0.0;
@@ -98,10 +98,7 @@ GLfloat minY = -1.0;
 
 //Light Source Information
 //Light Zero
-GLfloat diffuse0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat ambient0[]={0.5, 0.0, 0.0, 1.0};
-GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
-GLfloat light0_pos[]={3.0, 3.0, 0,0, 1.0};
+
 
 
 //****************************************************
@@ -121,6 +118,11 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 
+GLfloat diffuse0[]={1.0, 1.0, 1.0, 1.0};
+GLfloat ambient0[]={0.5, 0.0, 0.0, 1.0};
+GLfloat specular0[]={1.0, 1.0, 1.0, 1.0};
+GLfloat light0_pos[]={3.0, 3.0, 0,0, 1.0};
+
 void initScene(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
 	myReshape(viewport.w,viewport.h);
@@ -128,12 +130,13 @@ void initScene(){
 	glEnable(GL_NORMALIZE);
 
 	//Enable Light Source Number Zero
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient0);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse0);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, specular0);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);	
+	//glEnable(GL_DEPTH_TEST);
 }
 
 //*********************************************w
@@ -219,7 +222,6 @@ Tuple bernstein(GLfloat u, BCurve curve){
 Tuple patchPoint(GLfloat u, GLfloat v, BPatch patch) {
 	BCurve vcurve, ucurve;
 	Point p, dPdv, dPdu, n;
-	Tuple output;
 
 	vcurve.p1 = bernstein(u, patch.c1).p1;
 	vcurve.p2 = bernstein(u, patch.c2).p1;
@@ -237,38 +239,32 @@ Tuple patchPoint(GLfloat u, GLfloat v, BPatch patch) {
 	dPdv = temp1.p2;
 	dPdu = temp2.p2;
 
-	n = normalize(crossProduct(dPdu, dPdv));
+	n = crossProduct(dPdu, dPdv);
+	Tuple output;
 	output.p1 = p;
 	output.p2 = n;
-	return output;	
+	return output;
 }
 
-void drawPolygon(Point p1, Point p2, Point p3, Point p4){
-	Point n;
-	n = getNormal(p1, p2, p3);
-	glBegin(GL_QUADS);
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p1.x, p1.y, p1.z);
-
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p2.x, p2.y, p2.z);
-
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p4.x, p4.y, p4.z);
-
-	glNormal3f(n.x, n.y, n.z);
-	glVertex3f(p3.x, p3.y, p3.z);
+void drawPolygon(Tuple t1, Tuple t2, Tuple t3, Tuple t4){
+	glBegin(GL_POLYGON);
+	glNormal3f(t1.p2.x, t1.p2.y, t1.p2.z);
+	glVertex3f(t1.p1.x, t1.p1.y, t1.p1.z);
+	glNormal3f(t2.p2.x, t2.p2.y, t2.p2.z);
+	glVertex3f(t2.p1.x, t2.p1.y, t2.p1.z);
+	glNormal3f(t4.p2.x, t4.p2.y, t4.p2.z);
+	glVertex3f(t4.p1.x, t4.p1.y, t4.p1.z);
+	glNormal3f(t3.p2.x, t3.p2.y, t3.p2.z);
+	glVertex3f(t3.p1.x, t3.p1.y, t3.p1.z);
 	glEnd();
 }
 
 void drawTriangle(Triangle tri){
-	glBegin(GL_TRIANGLES);
+	glBegin(GL_POLYGON);
 	glNormal3f(tri.n1.x, tri.n1.y, tri.n1.z);
 	glVertex3f(tri.p1.x, tri.p1.y, tri.p1.z);
-
 	glNormal3f(tri.n2.x, tri.n2.y, tri.n2.z);
 	glVertex3f(tri.p2.x, tri.p2.y, tri.p2.z);
-
 	glNormal3f(tri.n3.x, tri.n3.y, tri.n3.z);
 	glVertex3f(tri.p3.x, tri.p3.y, tri.p3.z);
 	glEnd();
@@ -637,7 +633,8 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 }
 
 void curveTraversal(BPatch patch){
-	Point p1, p2, p3, p4;
+	Tuple t1, t2, t3, t4;
+
 	GLfloat old_u, new_u, old_v, new_v;
 	old_u = 0.0;
 	for (GLfloat u = 0.0; u < 1.0; u += stepSize) {
@@ -651,12 +648,12 @@ void curveTraversal(BPatch patch){
 			if (new_v > 1.0){
 				new_v = 1.0;
 			}
-			p1 = patchPoint(old_u, old_v, patch).p1;
-			p2 = patchPoint(new_u, old_v, patch).p1;
-			p3 = patchPoint(old_u, new_v, patch).p1;
-			p4 = patchPoint(new_u, new_v, patch).p1;
+			t1 = patchPoint(old_u, old_v, patch);
+			t2 = patchPoint(new_u, old_v, patch);
+			t3 = patchPoint(old_u, new_v, patch);
+			t4 = patchPoint(new_u, new_v, patch);
 
-			drawPolygon(p1, p2, p3, p4);
+			drawPolygon(t1, t2, t3, t4);
 			old_v = new_v;
 		}
 		old_u = new_u;
