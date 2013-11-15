@@ -202,8 +202,8 @@ GLfloat distancePoint(Point p1, Point p2) {
 	return sqrt(pow(p1.x-p2.x, 2.0)+pow(p1.y-p2.y, 2.0) + pow(p1.z-p2.z, 2.0));
 }
 
-Point bernstein(GLfloat u, BCurve curve){
-	Point a, b, c, d, e;
+Point* bernstein(GLfloat u, BCurve curve){
+	Point a, b, c, d, e, p, pd;
 
 	a = addPoint(multiplyPoint((1.0-u), curve.p1), multiplyPoint(u, curve.p2));
 	b = addPoint(multiplyPoint((1.0-u), curve.p2), multiplyPoint(u, curve.p3));
@@ -212,18 +212,38 @@ Point bernstein(GLfloat u, BCurve curve){
 	d = addPoint(multiplyPoint((1.0-u), a), multiplyPoint(u, b));
 	e = addPoint(multiplyPoint((1.0-u), b), multiplyPoint(u, c));
 
-	return addPoint(multiplyPoint((1.0-u), d), multiplyPoint(u, e));
+	p = addPoint(multiplyPoint((1.0-u), d), multiplyPoint(u, e));
+	pd = multiplyPoint(3.0, subtractPoint(e, d));
+	
+	Point output[2] = {p, pd};
+	return output
 }
 
 Point patchPoint(GLfloat u, GLfloat v, BPatch patch) {
-	BCurve curve;
+	BCurve vcurve, ucurve;
+	Point p, dPdv, dPdu, n;
+	
 
-	curve.p1 = bernstein(u, patch.c1);
-	curve.p2 = bernstein(u, patch.c2);
-	curve.p3 = bernstein(u, patch.c3);
-	curve.p4 = bernstein(u, patch.c4);
+	vcurve.p1 = bernstein(u, patch.c1)[0];
+	vcurve.p2 = bernstein(u, patch.c2)[0];
+	vcurve.p3 = bernstein(u, patch.c3)[0];
+	vcurve.p4 = bernstein(u, patch.c4)[0];
 
-	return bernstein(v, curve);
+	ucurve.p1 = bernstein(v, patch.c1)[0];
+	ucurve.p2 = bernstein(v, patch.c2)[0];
+	ucurve.p3 = bernstein(v, patch.c3)[0];
+	ucurve.p4 = bernstein(v, patch.c4)[0];
+
+	Point* temp1 = bernstein(v, vcurve);
+	Point* temp2 = bernstein(u, ucurve);
+	p = temp1[0];
+	dPdv = temp1[1];
+	dPdu = temp2[1];
+
+	n = normalize(crossProduct(dPdu, dPdv));
+	Point output[2] = {p, n};
+	return output;
+		
 }
 
 void drawPolygon(Point p1, Point p2, Point p3, Point p4){
@@ -284,9 +304,9 @@ void subdivideTriangle(Triangle tri, BPatch patch, int depth) {
 	*midPara2 = midPoint(tri.pc2, tri.pc3);
 	*midPara3 = midPoint(tri.pc1, tri.pc3);
 
-	*midReal1 = patchPoint(midPara1->x, midPara1->y, patch);
-	*midReal2 = patchPoint(midPara2->x, midPara2->y, patch);
-	*midReal3 = patchPoint(midPara3->x, midPara3->y, patch);
+	*midReal1 = patchPoint(midPara1->x, midPara1->y, patch)[0];
+	*midReal2 = patchPoint(midPara2->x, midPara2->y, patch)[0];
+	*midReal3 = patchPoint(midPara3->x, midPara3->y, patch)[0];
 
 	if (distancePoint(*midReal1, *midPoint1) > stepSize) {
 		edge1 = true;
@@ -548,10 +568,10 @@ void curveTraversal(BPatch patch){
 				new_v = 1.0;
 			}
 
-			p1 = patchPoint(old_u, old_v, patch);
-			p2 = patchPoint(new_u, old_v, patch);
-			p3 = patchPoint(old_u, new_v, patch);
-			p4 = patchPoint(new_u, new_v, patch);
+			p1 = patchPoint(old_u, old_v, patch)[0];
+			p2 = patchPoint(new_u, old_v, patch)[0];
+			p3 = patchPoint(old_u, new_v, patch)[0];
+			p4 = patchPoint(new_u, new_v, patch)[0];
 
 			drawPolygon(p1, p2, p3, p4);
 
